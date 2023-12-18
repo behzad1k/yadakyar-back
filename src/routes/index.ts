@@ -1,0 +1,30 @@
+import { Router } from "express";
+import { AddressRoutes } from "./address";
+import { AdminRoutes } from "./admin";
+import { AttributeRoutes } from './attribute';
+import { CartRoutes } from './cart';
+import { CategoryRoutes } from './category';
+import { MenuRoutes } from './menu';
+import { OrderRoutes } from "./order";
+import { SearchRoutes } from './serach';
+import { SettingRoutes } from './setting';
+import { UserRoutes } from "./user";
+import { AuthRoutes } from "./auth";
+import { ProductRoutes } from "./product";
+
+const routes = Router();
+
+// routes.use("/auth", auth);
+routes.use("/admin", new AdminRoutes().router);
+routes.use("/address", new AddressRoutes().router);
+routes.use("/user", new UserRoutes().router);
+routes.use("/product", new ProductRoutes().router);
+routes.use("/category", new CategoryRoutes().router);
+routes.use("/cart", new CartRoutes().router);
+routes.use("/setting", new SettingRoutes().router);
+routes.use("/attribute", new AttributeRoutes().router);
+routes.use("/menu", new MenuRoutes().router);
+routes.use("/search", new SearchRoutes().router);
+routes.use("/order", new OrderRoutes().router);
+routes.use("", new AuthRoutes().router);
+export default routes;
