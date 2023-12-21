@@ -48,8 +48,8 @@ export class Product {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => AttributeProduct, attributeProduct => attributeProduct.products, { onDelete: 'CASCADE' })
-  attributes: Attribute[]
+  @OneToMany(() => AttributeProduct, attributeProduct => attributeProduct.products, { onDelete: 'CASCADE'  })
+  attributes: AttributeProduct[]
 
   @ManyToOne(() => ProductGroup, productGroup => productGroup.products)
   @JoinColumn({

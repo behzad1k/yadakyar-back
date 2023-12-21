@@ -7,6 +7,7 @@ import {
   OneToMany, ManyToMany, JoinTable, TreeChildren, Tree, TreeParent, ManyToOne, JoinColumn, getRepository
 } from 'typeorm';
 import { dataTypes } from '../utils/enums';
+import { AttributeGroup } from './AttributeGroup';
 import { Brand } from './Brand';
 import { Category } from './Category';
 import { PaymentMethod } from './PaymentMethod';
@@ -27,10 +28,16 @@ export class ProductGroup {
   slug: string;
 
   @Column(dataTypes.text)
+  code: string;
+
+  @Column(dataTypes.text)
   shortText: string;
 
   @Column(dataTypes.text)
   longText: string;
+
+  @Column(dataTypes.text)
+  sort: string;
 
   @Column(dataTypes.text)
   status: string;
@@ -71,7 +78,7 @@ export class ProductGroup {
     name: 'attributeGroupId',
     referencedColumnName: 'id'
   })
-  attributeGroup: PaymentMethod;
+  attributeGroup: AttributeGroup;
 
   @OneToMany(() => Product, product => product.productGroup, {
     onDelete: 'CASCADE',

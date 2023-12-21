@@ -1,49 +1,73 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 import jwtDecode from 'jwt-decode';
-import { createQueryBuilder, getConnection, getManager, getRepository, getTreeRepository } from 'typeorm';
-import { Attribute } from '../entity/Attribute';
+import { getRepository } from 'typeorm';
 import { AttributeProduct } from '../entity/AttributeProduct';
-import { Media } from '../entity/Media';
 import { Order } from '../entity/Order';
 import { OrderProduct } from '../entity/OrderProduct';
 import { Product } from '../entity/Product';
 import { User } from '../entity/User';
-import sms from '../utils/sms';
 
 class CartController {
-  static attributeProducts = () => getRepository(AttributeProduct)
-  static products = () => getRepository(Product)
-  static orders = () => getRepository(Order)
-  static orderProducts = () => getRepository(OrderProduct)
-  static users = () => getRepository(User)
+  static attributeProducts = () => getRepository(AttributeProduct);
+  static products = () => getRepository(Product);
+  static orders = () => getRepository(Order);
+  static orderProducts = () => getRepository(OrderProduct);
+  static users = () => getRepository(User);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
-    const token: any = jwtDecode(req.headers.authorization);
-    const id: number = token.userId;
-    let cart;
+    if (req.headers.authorization == "Bearer undefined"){
+      return res.status(401).send({
+        code: 401,
+        data: 'Unauthorized access'
+      });
+    }
+    const token: any = jwtDecode(req.headers.authorization || '');
+    const id: number = token?.userId;
+    let user;
     try {
-      cart = await this.orders().findOne({
-        relations: ['products']
-      })
+      user = await this.users().findOneOrFail({ where: { id: id } });
     } catch (error) {
       console.log(error);
-      res.status(400).send({
+      return res.status(400).send({
         code: 400,
         data: 'Invalid UserId'
       });
-      return;
     }
 
+    let cart;
+    try {
+      cart = await this.orders().findOneOrFail({
+        where: {
+          userId: user.id,
+          inCart: true
+        },
+        relations: ['products']
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send({
+        code: 400,
+        data: 'Invalid UserId'
+      });
+    }
 
-    return res.status(200).send({ code: 200, data: cart })
-  }
+    return res.status(200).send({
+      code: 200,
+      data: cart || {}
+    });
+  };
+
   static updateCount = async (req: Request, res: Response): Promise<Response> => {
     const token: any = jwtDecode(req.headers.authorization);
     const id: number = token.userId;
-    const { orderId, productId, newCount } = req.body;
+    const {
+      orderId,
+      productId,
+      newCount
+    } = req.body;
     let user;
     try {
-      user = await this.users().findOne({ where: { id: id } })
+      user = await this.users().findOne({ where: { id: id } });
     } catch (error) {
       console.log(error);
       res.status(400).send({
@@ -57,7 +81,7 @@ class CartController {
     try {
       order = await this.orders().findOne({
         where: { id: orderId },
-      })
+      });
     } catch (error) {
       console.log(error);
       res.status(400).send({
@@ -68,7 +92,7 @@ class CartController {
     }
 
     try {
-      if (newCount > 0){
+      if (newCount > 0) {
         await this.orderProducts().update({
           productId: productId,
           orderId: orderId
@@ -81,12 +105,17 @@ class CartController {
       }
     } catch (error) {
       console.log(error);
-      return res.status(409).send({code: 409, data: "error try again later"});
+      return res.status(409).send({
+        code: 409,
+        data: 'error try again later'
+      });
     }
 
-
-    return res.status(200).send({ code: 200, data: "" })
-  }
+    return res.status(200).send({
+      code: 200,
+      data: ''
+    });
+  };
 
 }
 

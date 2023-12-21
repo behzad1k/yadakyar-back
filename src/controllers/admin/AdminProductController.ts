@@ -5,15 +5,22 @@ import { Attribute } from '../../entity/Attribute';
 import { AttributeProduct } from '../../entity/AttributeProduct';
 import { AttributeValue } from '../../entity/AttributeValue';
 import { Product } from '../../entity/Product';
+import { ProductGroup } from '../../entity/ProductGroup';
 import { getUniqueSlug } from '../../utils/funs';
 
 class AdminProductController {
   static products = () => getRepository(Product);
+  static productGroups = () => getRepository(ProductGroup);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
+    const { productGroupId } = req.query
     let products = null;
     try {
-      products = await getTreeRepository(Product).findTrees();
+      let where = {}
+      if (productGroupId){
+        where['productGroupId'] = productGroupId
+      }
+      products = await this.products().find({ where: where, relations: ['attributes'] });
     } catch (e) {
       return res.status(501).send({
         code: 501,
@@ -160,8 +167,11 @@ class AdminProductController {
     const { id } = req.params;
     let product = null;
     try {
-      product = await this.products().findOneOrFail({
-        where: { id: Number(id) },
+      product = await this.productGroups().findOneOrFail({
+        where: {
+          id: Number(id),
+        },
+        relations: ['products']
       });
     } catch (error) {
       res.status(400).send({

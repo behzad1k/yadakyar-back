@@ -13,7 +13,7 @@ class AdminOrderController {
   static products = () => getRepository(Product);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
-    let orders,orderCount: number;
+    let orders;
     try {
       orders = await this.orders().find({
         where: { inCart: false },

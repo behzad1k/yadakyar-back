@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as process from 'process';
-import { getRepository, getTreeRepository } from 'typeorm';
+import { getConnection, getRepository, getTreeRepository } from 'typeorm';
 import { AttributeGroup } from '../../entity/AttributeGroup';
 import { AttributeProduct } from '../../entity/AttributeProduct';
 import { Media } from '../../entity/Media';
@@ -11,7 +11,7 @@ import { Product } from '../../entity/Product';
 import { ProductGroup } from '../../entity/ProductGroup';
 import { Setting } from '../../entity/Setting';
 import { Tag } from '../../entity/Tag';
-import { getEuroPrice, getUniqueSlug } from '../../utils/funs';
+import { getEuroPrice, getUniqueCode, getUniqueSlug } from '../../utils/funs';
 
 class AdminProductGroupController {
   static productGroups = () => getRepository(ProductGroup);
@@ -56,19 +56,21 @@ class AdminProductGroupController {
       wholesomePrice,
       discountPrice,
       status,
-      picture
+      picture,
+      sort
     } = req.body;
-    console.log(req.body);
     const productGroup = new ProductGroup();
     productGroup.title = title;
     productGroup.titleEng = titleEng;
     productGroup.shortText = shortText;
     productGroup.longText = longText;
     productGroup.brandId = brandId;
+    productGroup.sort = sort;
     productGroup.status = groupStatus;
     productGroup.categoryId = categoryId;
     productGroup.attributeGroupId = attributeGroupId;
     productGroup.slug = await getUniqueSlug(this.productGroups(), title);
+    productGroup.code = await getUniqueCode(this.productGroups());
 
     let tag = null;
     try{
@@ -163,10 +165,26 @@ class AdminProductGroupController {
     const { id } = req.params;
     const {
       title,
-      description,
+      titleEng,
+      shortText,
+      longText,
+      categoryId,
+      attributeGroupId,
+      tagId,
+      brandId,
+      groupStatus,
+      sku,
+      count,
+      price,
+      wholesomePrice,
+      discountPrice,
+      status,
+      picture,
+      sort,
+      productId
     } = req.body;
-    let productGroup: ProductGroup;
 
+    let productGroup: ProductGroup;
     try {
       productGroup = await this.productGroups().findOneOrFail({ where: { id: Number(id) } });
     } catch (error) {
@@ -179,9 +197,15 @@ class AdminProductGroupController {
       productGroup.title = title;
       productGroup.slug = await getUniqueSlug(this.productGroups(), title);
     }
-    if (description) {
-      productGroup.longText = description;
-    }
+
+    productGroup.titleEng = titleEng;
+    productGroup.shortText = shortText;
+    productGroup.longText = longText;
+    productGroup.brandId = brandId;
+    productGroup.sort = sort;
+    productGroup.status = groupStatus;
+    productGroup.categoryId = categoryId;
+    productGroup.attributeGroupId = attributeGroupId;
 
     const errors = await validate(productGroup);
     if (errors.length > 0) {
@@ -190,8 +214,46 @@ class AdminProductGroupController {
     try {
       await this.productGroups().save(productGroup);
     } catch (e) {
+      console.log(e);
       return res.status(409).send('error try again later');
     }
+
+    let attributeGroup: AttributeGroup = null;
+    try {
+      attributeGroup = await this.attributeGroups().findOne({ where: { id: productGroup.attributeGroupId } });
+    }catch (e){
+      console.log(e);
+      return res.status(400).send({ code: 1002, data: "Invalid Id" })
+    }
+    const euroPrice = await this.settings().findOne({ where: { key: 'euroPrice' } });
+
+    for (let i = 0; i < sku.length; i++) {
+      await this.products().delete({ id: productId[i] });
+
+      let product: Product = new Product();
+      product.sku = sku[i];
+      product.count = Number(count[i]);
+      product.price = price[i];
+      product.euroPrice = getEuroPrice(price[i], Number(euroPrice.value));
+      product.wholesomePrice = wholesomePrice[i];
+      product.discountPrice = discountPrice[i];
+      product.mediaId = 95
+      // product.mediaId = medias[Number(picture[i]) - 1].raw.insertId
+      product.status = status[i]
+      product.productGroupId = productGroup.id
+      await this.products().insert( product);
+
+      await this.attributeProducts().delete({ productId: productId[i] })
+
+      attributeGroup.attributes.map((attribute) => {
+        this.attributeProducts().insert({
+          productId: productId[i],
+          attributeSlug: attribute.slug,
+          attributeValueSlug: req.body[`attribute-${attribute.id}`][i],
+        })
+      })
+    }
+
     return res.status(200).send({
       code: 200,
       data: productGroup
@@ -229,16 +291,20 @@ class AdminProductGroupController {
 
     let productGroup = null;
     try {
+      // productGroup = await getConnection().query('SELECT * FROM `product_group` INNER JOIN `product` ON product.productGroupId = product_group.id INNER JOIN `attribute_product` ON product.id = attribute_product.productId where product_group.id = ' + Number(id))
       productGroup = await this.productGroups().findOneOrFail({
         where: { id: Number(id) },
-      });
+        relations:['products', 'products.attributes'],
+      })
     } catch (error) {
+      console.log(error);
       res.status(400).send({
         code: 1002,
         data: 'Invalid Id'
       });
       return;
     }
+    console.log(productGroup);
     return res.status(200).send({
       code: 200,
       data: productGroup

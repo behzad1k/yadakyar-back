@@ -19,7 +19,7 @@ export const generateCode = (length = 6, type = dataTypes.number) => {
 
 export const getUniqueSlug = async (repository: Repository<any>, value:string, key = 'slug' ) => {
     let index = 1;
-    let slug = value.replace(' ', '-');
+    let slug = value?.replace(' ', '-');
     let where = {}
     where[key] = slug;
     while(await repository.findOne({
@@ -39,7 +39,7 @@ export const getEuroPrice = (price: number, euroPrice: number) => {
 }
 
 export const getUniqueCode = async (repository: Repository<any>) => {
-    let code = generateCode(8, dataTypes.string);
+    let code = generateCode(6, dataTypes.string);
     while(await repository.findOne({
         where: {
             code: code

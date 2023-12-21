@@ -16,43 +16,10 @@ class AdminUserController {
   static index = async (req: Request, res: Response): Promise<Response> => {
     const { type, product } = req.query
     let users, productObj;
-    try {
-      if (product) {
-        productObj = await this.products().findOne({
-          // where: {
-          //   slug: product as string
-          // }
-        })
-      }
-    }
-    catch (e){
-      return res.status(400).send({code: 400, data: 'Unexpected Error'})
-    }
     const validType = getObjectValue(roles,type?.toString().toUpperCase())
-    if (productObj && validType){
-      users = await this.users().find({
-        where: {
-          role: validType
-        },
+    users = await this.users().find({
         relations: ['product']
       })
-    }
-    else if (validType) {
-      users = await this.users().find({
-        where: {
-          role: validType
-        },
-        relations: ['product']
-      });
-    }
-    else if(productObj){
-      users = await this.users().find({
-        relations: ['product']
-      })
-    }
-    else {
-      users = await this.users().find();
-    }
     return res.status(200).send({'code': 200, 'data': users})
   }
   static create = async (req: Request, res: Response): Promise<Response> => {
