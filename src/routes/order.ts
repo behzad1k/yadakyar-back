@@ -17,6 +17,7 @@ export class OrderRoutes {
     this.router.post("",this.authController.authenticateJWT, OrderController.create);
     this.router.put("", this.authController.authorizeJWTWorker, OrderController.update);
     this.router.delete("", this.authController.authenticateJWT ,OrderController.delete);
+    this.router.get("/status", OrderController.status);
     this.router.get("/cart", OrderController.cart);
     this.router.post("/place", OrderController.place);
     this.router.post("/pay", OrderController.pay);

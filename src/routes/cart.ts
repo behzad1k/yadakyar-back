@@ -4,6 +4,7 @@ import CartController from "../controllers/CartController";
 
 export class CartRoutes {
   public router: Router;
+  public authController: AuthController = new AuthController();
 
   constructor() {
     this.router = Router();
@@ -11,7 +12,7 @@ export class CartRoutes {
   }
 
   routes() {
-    this.router.get("/", CartController.index);
-    this.router.put("/updateCount", CartController.updateCount);
+    this.router.get("/", this.authController.authenticateJWT, CartController.index);
+    this.router.put("/updateCount", this.authController.authenticateJWT, CartController.updateCount);
   }
 }

@@ -24,6 +24,15 @@ export class OrderProduct {
   @Column(dataTypes.integer)
   count: number;
 
+  @Column(dataTypes.integer)
+  price: number;
+
+  @Column(dataTypes.integer)
+  priceToman: number;
+
+  @Column(dataTypes.integer, { default: 0 })
+  discountPrice: number;
+
   @ManyToOne(() => Product, product => product.attributes, { onDelete: 'CASCADE', eager: true })
   @JoinColumn({
     name: 'productId',

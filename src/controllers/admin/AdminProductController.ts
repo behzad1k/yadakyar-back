@@ -50,7 +50,7 @@ class AdminProductController {
     const product = new Product();
 
     product.price = price;
-    product.euroPrice = euroPrice;
+    product.priceToman = euroPrice;
     product.wholesomePrice = wholesomePrice;
     product.discountPrice = discountPrice;
     product.status = status;

@@ -12,6 +12,9 @@ export class AdminOrderRoutes {
 
   routes() {
     this.router.get("/", AdminOrderController.index);
+    this.router.get("/preBill/:id", AdminOrderController.preBill);
+    this.router.post("/preBill/:id", AdminOrderController.preBillCreate);
     this.router.put("/update", AdminOrderController.update);
+    this.router.delete("/:id", AdminOrderController.delete);
   }
 }

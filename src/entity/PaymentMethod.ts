@@ -22,18 +22,7 @@ export class PaymentMethod {
   title: string;
 
   @Column(dataTypes.text)
-  slug: string;
-
-  @Column(dataTypes.text)
-  code: string;
-
-  @Column(dataTypes.datetime)
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @Column(dataTypes.datetime)
-  @UpdateDateColumn()
-  updatedAt: Date;
+  description: string;
 
   @OneToMany(() => Payment, (payment) => payment.paymentMethod, { onDelete: 'CASCADE' })
   payments: Payment[]

@@ -129,10 +129,16 @@ class UserController {
     const token: any = jwtDecode(req.headers.authorization);
     const id: number = token.userId;
     let user;
+    console.log('here');
     try {
       user = await this.users().findOneOrFail({
-        where: { id: id },
-        relations: ['orders']
+        relations: ['orders'],
+        where: {
+          id: id,
+          orders: {
+            id: 1
+          }
+        }
       });
     } catch (e) {
       return res.status(400).send({

@@ -17,17 +17,11 @@ export class Delivery {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column(dataTypes.text)
-  title: string;
-
-  @Column(dataTypes.text)
-  slug: string;
-
-  @Column(dataTypes.text)
-  code: string;
-
   @Column(dataTypes.integer)
   price: number;
+
+  @Column(dataTypes.integer, { default: 1 })
+  deliveryMethodId: number;
 
   @Column(dataTypes.datetime)
   @CreateDateColumn()
@@ -41,6 +35,6 @@ export class Delivery {
   orders: Order[];
 
   @ManyToOne(() => DeliveryMethod, (deliveryMethod) => deliveryMethod.deliveries, { onDelete: 'CASCADE' })
-  @JoinColumn({name: 'deliveryMethodId', referencedColumnName: 'id'})
+  @JoinColumn({ name: 'deliveryMethodId', referencedColumnName: 'id' })
   deliveryMethod: PaymentMethod
 }

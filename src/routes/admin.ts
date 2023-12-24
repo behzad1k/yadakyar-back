@@ -13,6 +13,7 @@ import { AdminMenuRoutes } from './admin/menu';
 import { AdminOrderRoutes } from "./admin/order";
 import { AdminProductRoutes } from "./admin/product";
 import { AdminProductGroupRoutes } from './admin/productGroup';
+import { AdminSettingRoutes } from './admin/setting';
 import { AdminTagRoutes } from './admin/tag';
 import { AdminUserRoutes } from "./admin/user";
 
@@ -38,6 +39,7 @@ export class AdminRoutes {
     this.router.use("/product",this.authController.authorizeJWTAdmin,new AdminProductRoutes().router)
     this.router.use("/productGroup",this.authController.authorizeJWTAdmin,new AdminProductGroupRoutes().router)
     this.router.use("/order",this.authController.authorizeJWTAdmin,new AdminOrderRoutes().router)
+    this.router.use("/setting",this.authController.authorizeJWTAdmin,new AdminSettingRoutes().router)
     this.router.use("/user",this.authController.authorizeJWTAdmin,new AdminUserRoutes().router)
     this.router.use("/article",this.authController.authorizeJWTAdmin,new AdminArticleRoutes().router)
     this.router.use("/articleCategory",this.authController.authorizeJWTAdmin,new AdminArticleCategoryRoutes().router)

@@ -20,7 +20,7 @@ export class Product {
   price: number;
 
   @Column(dataTypes.integer)
-  euroPrice: number;
+  priceToman: number;
 
   @Column(dataTypes.integer)
   wholesomePrice: number;

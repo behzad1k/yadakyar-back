@@ -15,17 +15,11 @@ class CartController {
   static users = () => getRepository(User);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
-    if (req.headers.authorization == "Bearer undefined"){
-      return res.status(401).send({
-        code: 401,
-        data: 'Unauthorized access'
-      });
-    }
     const token: any = jwtDecode(req.headers.authorization || '');
     const id: number = token?.userId;
     let user;
     try {
-      user = await this.users().findOneOrFail({ where: { id: id } });
+      user = await this.users().findOne({ where: { id: id } });
     } catch (error) {
       console.log(error);
       return res.status(400).send({
@@ -36,7 +30,7 @@ class CartController {
 
     let cart;
     try {
-      cart = await this.orders().findOneOrFail({
+      cart = await this.orders().findOne({
         where: {
           userId: user.id,
           inCart: true
@@ -47,7 +41,7 @@ class CartController {
       console.log(error);
       return res.status(400).send({
         code: 400,
-        data: 'Invalid UserId'
+        data: 'Invalid Id'
       });
     }
 

@@ -18,18 +18,7 @@ export class DeliveryMethod {
   title: string;
 
   @Column(dataTypes.text)
-  slug: string;
-
-  @Column(dataTypes.text)
-  code: string;
-
-  @Column(dataTypes.datetime)
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @Column(dataTypes.datetime)
-  @UpdateDateColumn()
-  updatedAt: Date;
+  description: string;
 
   @OneToMany(() => Delivery, (delivery) => delivery.deliveryMethod, { onDelete: 'CASCADE' })
   deliveries: Delivery[]

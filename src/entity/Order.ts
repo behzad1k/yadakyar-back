@@ -12,6 +12,8 @@ import { Address } from './Address';
 import { Delivery } from './Delivery';
 import { Discount } from './Discount';
 import { OrderProduct } from './OrderProduct';
+import { OrderStatus } from './OrderStatus';
+import { OrderStatusOrder } from './OrderStatusOrder';
 import { Payment } from './Payment';
 import { Product } from './Product';
 import { User } from './User';
@@ -24,6 +26,9 @@ export class Order {
 
   @Column(dataTypes.integer)
   price: number;
+
+  @Column(dataTypes.integer)
+  priceToman: number;
 
   @Column(dataTypes.integer, {
     nullable: true
@@ -40,25 +45,17 @@ export class Order {
   })
   wholesomePrice?: number;
 
-  @Column(dataTypes.integer, {
-    default: 0
-  })
-  transportation?: number;
-
   @Column(dataTypes.integer)
   userId?: number;
 
-  @Column(dataTypes.text)
-  status: string;
+  @Column(dataTypes.integer)
+  status: number;
 
   @Column(dataTypes.integer, { nullable: true })
   addressId: number;
 
   @Column(dataTypes.integer, { nullable: true })
   deliveryId: number;
-
-  @Column(dataTypes.integer, { nullable: true })
-  paymentId: number;
 
   @Column(dataTypes.text, { nullable: true })
   code: string;
@@ -83,6 +80,9 @@ export class Order {
   })
   user: User;
 
+  @OneToMany(() => OrderStatusOrder, (orderStatusOrder) => orderStatusOrder.order, { onDelete: 'CASCADE' })
+  orderStatuses: OrderStatus[];
+
   @ManyToOne(() => Delivery, (delivery) => delivery.orders, { onDelete: 'CASCADE' })
   @JoinColumn({
     name: 'deliveryId',
@@ -90,12 +90,11 @@ export class Order {
   })
   delivery: Delivery;
 
-  @ManyToOne(() => Payment, (payment) => payment.orders, { onDelete: 'CASCADE' })
-  @JoinColumn({
-    name: 'paymentId',
-    referencedColumnName: 'id'
+  @ManyToMany(() => Payment, (payment) => payment.orders, { onDelete: 'CASCADE' })
+  @JoinTable({
+    name: 'order_payment',
   })
-  payment: Payment;
+  payments: Payment[];
 
   @ManyToOne(() => Discount, (discount) => discount.orders, {
     nullable: true,

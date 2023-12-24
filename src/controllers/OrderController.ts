@@ -6,16 +6,19 @@ import { Address } from '../entity/Address';
 import { Discount } from '../entity/Discount';
 import { Order } from '../entity/Order';
 import { OrderProduct } from '../entity/OrderProduct';
+import { OrderStatus } from '../entity/OrderStatus';
 import { Product } from '../entity/Product';
+import { Setting } from '../entity/Setting';
 import { User } from '../entity/User';
 import { dataTypes, orderStatus } from '../utils/enums';
-import { generateCode, getUniqueSlug, omit } from '../utils/funs';
+import { generateCode, getTomanPrice, getUniqueSlug, omit } from '../utils/funs';
 
 class OrderController {
 
   static users = () => getRepository(User);
   static orders = () => getRepository(Order);
   static products = () => getRepository(Product);
+  static orderProducts = () => getRepository(OrderProduct);
   static addresses = () => getRepository(Address);
   static discounts = () => getRepository(Discount);
   static index = async (req: Request, res: Response): Promise<Response> => {
@@ -71,6 +74,7 @@ class OrderController {
     } = req.body;
 
     let user, productObjs = [], discountObj;
+
     try {
       user = await this.users().findOneOrFail({
         where: { id: userId },
@@ -87,32 +91,74 @@ class OrderController {
     let order = undefined;
 
     try {
-      order = await this.orders().findOne({ where: { userId : user.id, inCart: true }})
+      order = await this.orders().findOne({
+        where: {
+          userId: user.id,
+          inCart: true
+        }
+      });
+      if (!order) {
+        console.log('here');
+        order = await this.orders().insert({
+          price: 0,
+          userId: user.id,
+          status: 1,
+          priceToman: 0
+        })
+        order = order.generatedMaps[0]
+      }
+    } catch (e) {
+      console.log(e);
+    }
+
+    try {
+      await Promise.all(
+      products.map(async (product, index) => {
+        const orderProduct = await getRepository(OrderProduct).findOne({
+          orderId: order.id,
+          productId: product
+        });
+
+        if (orderProduct){
+          const newCount = Number(orderProduct.count) + Number(counts[index]);
+          await getRepository(OrderProduct).update(orderProduct.id, { count: newCount });
+        } else {
+          const productObj = await getRepository(Product).findOne({ id: product })
+          await getRepository(OrderProduct).insert({
+            orderId: order.id,
+            productId: product,
+            count: counts[index],
+            price: productObj.price,
+            priceToman: await getTomanPrice(getRepository(Setting), productObj.price)
+          });
+        }
+      }));
     }catch (e){
       console.log(e);
     }
-    let totalPrice = 0
 
-    let orderProducts = [];
-    let currentOrderProducts = [];
-    if(order){
-      try {
-        currentOrderProducts = await getRepository(OrderProduct).find({ orderId: order.id })
-        orderProducts = currentOrderProducts;
-      } catch (error) {
-        res.status(400).send({
-          code: 400,
-          data: 'Invalid Order'
-        });
-        return;
-      }
-    }else{
-      order = new Order();
-    }
-
-    for (let i = 0; i < products.length; i++) {
-      orderProducts.push({'productId': products[i], 'count': counts[i]})
-    }
+    // let currentOrderProducts = [];
+    // if (order) {
+    //   try {
+    //     currentOrderProducts = await getRepository(OrderProduct).find({ orderId: order.id });
+    //     orderProducts = currentOrderProducts;
+    //   } catch (error) {
+    //     res.status(400).send({
+    //       code: 400,
+    //       data: 'Invalid Order'
+    //     });
+    //     return;
+    //   }
+    // } else {
+    //   order = new Order();
+    // }
+    //
+    // for (let i = 0; i < products.length; i++) {
+    //   orderProducts.push({
+    //     'productId': products[i],
+    //     'count': counts[i]
+    //   });
+    // }
 
     // if (discount) {
     //   try {
@@ -145,42 +191,34 @@ class OrderController {
     //   order.discountId = discountObj.id;
     //   totalPrice = discountObj.percent ? totalPrice - (totalPrice * discountObj.percent / 100) : totalPrice - discountObj.amount;
     // }
-    try {
-      await Promise.all([
-        orderProducts.map(async (product) => {
-          const item = await getRepository(Product).findOneOrFail({ where: { id: product.productId } });
-          totalPrice += item.price * product.count;
-        })
-      ]);
-    }catch(e){
-      console.log(e);
+    // const prices: number[] = [];
+    // try {
+    //   await Promise.all([
+    //     orderProducts.map(async (product, index) => {
+    //       const item = await getRepository(Product).findOneOrFail({ where: { id: product.productId } });
+    //       prices[index] = item.price;
+    //       totalPrice += item.price * product.count;
+    //     })
+    //   ]);
+    // } catch (e) {
+    //   console.log(e);
+    // }
+    let orderProducts = [];
+    try{
+      orderProducts = await getRepository(OrderProduct).find({ orderId: order.id })
+    }catch (e){
+      return res.status(400).send({ code: 409, data: 'Something went wrong'})
     }
 
-    order.price = totalPrice;
-    order.user = user;
-    order.status = '1';
+    let totalPrice = 0;
 
-    const errors = await validate(order);
-    if (errors.length > 0) {
-      res.status(400).send(errors);
-      return;
-    }
+    orderProducts.map((orderProduct, index) => {
+      totalPrice += orderProduct.count * orderProduct.price
+    })
+
     try {
-      await this.orders().save(order);
-      await Promise.all([
-        orderProducts?.map(async (orderProduct, index) => {
-          const currentOrderProduct = currentOrderProducts.find((currentOrderProduct: any) => currentOrderProduct.orderId == order.id && currentOrderProduct.productId == orderProduct.productId)
-          if (currentOrderProduct){
-            await getRepository(OrderProduct).update({ id: currentOrderProduct.id },{ count: Number(currentOrderProduct.count) + Number(orderProduct.count) })
-          } else {
-            await getRepository(OrderProduct).insert({
-              orderId: order.id,
-              productId: orderProduct.productId,
-              count: counts[index]
-            });
-          }
-        })
-      ])
+      const tomanPrice = await getTomanPrice(getRepository(Setting), totalPrice)
+      await this.orders().update(order.id, { price: totalPrice, priceToman: tomanPrice});
     } catch (e) {
       console.log(e);
       res.status(409).send({ 'code': 409 });
@@ -299,7 +337,7 @@ class OrderController {
         inCart: true,
       }, {
         inCart: false,
-        status: '2',
+        status: 2,
         code: await getUniqueSlug(this.orders(), generateCode(8, dataTypes.number), 'code')
       });
     } catch (e) {
@@ -314,8 +352,7 @@ class OrderController {
       code: 200,
       data: ''
     });
-  }
-
+  };
 
   static pay = async (req: Request, res: Response): Promise<Response> => {
     const token: any = jwtDecode(req.headers.authorization);
@@ -391,6 +428,14 @@ class OrderController {
     }
     return res.status(200).send({ code: 200 });
   };
+
+  static status = async (req: Request, res: Response): Promise<Response> => {
+    const orderStatuses = await getRepository(OrderStatus).find();
+    return res.status(200).send({
+      code: 200,
+      data: orderStatuses
+    })
+  }
 }
 
 export default OrderController;

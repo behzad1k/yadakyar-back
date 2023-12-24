@@ -11,7 +11,7 @@ import { Product } from '../../entity/Product';
 import { ProductGroup } from '../../entity/ProductGroup';
 import { Setting } from '../../entity/Setting';
 import { Tag } from '../../entity/Tag';
-import { getEuroPrice, getUniqueCode, getUniqueSlug } from '../../utils/funs';
+import { getTomanPrice, getUniqueCode, getUniqueSlug } from '../../utils/funs';
 
 class AdminProductGroupController {
   static productGroups = () => getRepository(ProductGroup);
@@ -135,11 +135,10 @@ class AdminProductGroupController {
     }
     for (let i = 0; i < sku.length; i++) {
       const product = new Product();
-      const euroPrice = await this.settings().findOne({ where: { key: 'euroPrice' } });
       product.sku = sku[i];
       product.count = Number(count[i]);
       product.price = price[i];
-      product.euroPrice = getEuroPrice(price[i], Number(euroPrice.value));
+      product.priceToman = await getTomanPrice(getRepository(Setting), price[i]);
       product.wholesomePrice = wholesomePrice[i];
       product.discountPrice = discountPrice[i];
       product.mediaId = medias[Number(picture[i]) - 1].raw.insertId
@@ -234,7 +233,7 @@ class AdminProductGroupController {
       product.sku = sku[i];
       product.count = Number(count[i]);
       product.price = price[i];
-      product.euroPrice = getEuroPrice(price[i], Number(euroPrice.value));
+      product.priceToman = await getTomanPrice(price[i], Number(euroPrice.value));
       product.wholesomePrice = wholesomePrice[i];
       product.discountPrice = discountPrice[i];
       product.mediaId = 95

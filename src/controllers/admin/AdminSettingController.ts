@@ -55,40 +55,25 @@ class AdminSettingController {
   };
 
   static update = async (req: Request, res: Response): Promise<Response> => {
-    const { id } = req.params;
+    const { key } = req.params;
+    console.log(key);
     const {
-      key,
       value,
     } = req.body;
-    let setting: Setting;
-    console.log(Number(id));
     try {
-      setting = await this.settings().findOneOrFail({ where: { id: Number(id) } });
+      await this.settings().update({
+        key: key
+      },{ value: value });
     } catch (error) {
       return res.status(400).send({
-        code: 1002,
+        code: 409,
         data: 'Invalid Id'
       });
     }
-    if (key) {
-      setting.key = key;
-    }
-    if (value) {
-      setting.value = value;
-    }
 
-    const errors = await validate(setting);
-    if (errors.length > 0) {
-      return res.status(400).send(errors);
-    }
-    try {
-      await this.settings().save(setting);
-    } catch (e) {
-      return res.status(409).send('error try again later');
-    }
     return res.status(200).send({
       code: 200,
-      data: setting
+      data: {  }
     });
   };
 

@@ -15,22 +15,25 @@ export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column(dataTypes.text)
-  title: string;
+  @Column(dataTypes.integer)
+  price: number;
 
-  @Column(dataTypes.text)
-  slug: string;
-
-  @Column(dataTypes.text)
+  @Column(dataTypes.text, { nullable: true })
   code: string;
 
-  @Column(dataTypes.text)
+  @Column(dataTypes.text, { nullable: true })
   bank: string;
 
-  @Column(dataTypes.text)
+  @Column(dataTypes.datetime, { nullable: true })
   date: string;
 
-  @Column(dataTypes.integer)
+  @Column(dataTypes.boolean, { default: true })
+  isPre: boolean;
+
+  @Column(dataTypes.boolean, { default: false })
+  isPaid: boolean;
+
+  @Column(dataTypes.integer, { default: 1 })
   paymentMethodId: number;
 
   @Column(dataTypes.datetime)
@@ -41,7 +44,7 @@ export class Payment {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Order, order => order.payment)
+  @OneToMany(() => Order, order => order.payments)
   orders: Order[];
 
   @ManyToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.payments, { onDelete: 'CASCADE' })

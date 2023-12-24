@@ -34,8 +34,9 @@ export const getUniqueSlug = async (repository: Repository<any>, value:string, k
     return where[key];
 }
 
-export const getEuroPrice = (price: number, euroPrice: number) => {
-  return price / euroPrice;
+export const getTomanPrice = async (repository: Repository<any>, price: number) => {
+  const derhamPrice = await repository.findOne({ where: { key: 'derhamPrice' } });
+  return price * derhamPrice.value;
 }
 
 export const getUniqueCode = async (repository: Repository<any>) => {
