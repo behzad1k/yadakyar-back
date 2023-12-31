@@ -1,14 +1,12 @@
 import { validate } from 'class-validator';
 import { Request, Response } from 'express';
-import { getManager, getRepository } from 'typeorm';
+import { getRepository } from 'typeorm';
 import { Delivery } from '../../entity/Delivery';
 import { Order } from '../../entity/Order';
 import { OrderProduct } from '../../entity/OrderProduct';
 import { Payment } from '../../entity/Payment';
 import { Product } from '../../entity/Product';
 import { User } from '../../entity/User';
-
-import { orderStatus } from '../../utils/enums';
 
 class AdminOrderController {
   static users = () => getRepository(User);
@@ -20,7 +18,7 @@ class AdminOrderController {
     try {
       orders = await this.orders().find({
         where: { inCart: false },
-        relations: ['products', 'user']
+        relations: ['products', 'user', 'payments', 'delivery']
       });
     } catch (e) {
       console.log(e);
@@ -35,19 +33,41 @@ class AdminOrderController {
     });
   };
 
-  static update = async (req: Request, res: Response): Promise<Response> => {
-    const {
-      orderId,
-      workerId
-    } = req.body;
+  static single = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
 
-    let order: Order, user: User
+    let order;
+    try {
+      order = await this.orders().findOne({
+        where: { id: Number(id) },
+        relations: ['products.product.productGroup.category' , 'user', 'payments', 'delivery', 'address']
+      });
+    } catch (e) {
+      console.log(e);
+      return res.status(400).send({
+        code: 400,
+        data: 'Unexpected Error'
+      });
+    }
+    return res.status(200).send({
+      code: 200,
+      data: order
+    });
+  };
+
+  static update = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+    const {
+      products,
+      counts,
+      prices,
+    } = req.body;
+    let order: Order, user: User;
     try {
       order = await this.orders().findOneOrFail({
-        where: { id: orderId },
-        relations: ['product']
+        where: { id: Number(id) },
+        relations: ['products']
       });
-
 
     } catch (error) {
       console.log(error);
@@ -57,19 +77,18 @@ class AdminOrderController {
       });
       return;
     }
-    try {
-      user = await this.users().findOneOrFail({
-        where: {
-          id: workerId,
-        }
-      });
-    } catch (error) {
-      res.status(400).send({
-        code: 400,
-        data: 'Invalid Worker'
-      });
-      return;
-    }
+
+    await Promise.all(
+      products?.map(async (productId, index) => {
+        await getRepository(OrderProduct).update({
+          orderId: Number(id),
+          productId: Number(productId)
+        }, {
+          count: counts[index],
+          price: prices[index]
+        })
+      })
+    )
     // order.status = orderStatus.Assigned;
     const errors = await validate(order);
     if (errors.length > 0) {
@@ -93,63 +112,107 @@ class AdminOrderController {
     try {
       await getRepository(OrderProduct).delete({ orderId: Number(id) });
       await this.orders().delete(id);
-    }catch (e){
+    } catch (e) {
       console.log(e);
-      return res.status(400).send({ code: 1002, data: "Invalid Id"})
+      return res.status(400).send({
+        code: 1002,
+        data: 'Invalid Id'
+      });
     }
 
-    return res.status(204).send({ code: 200, data: "successful" })
-  }
+    return res.status(204).send({
+      code: 200,
+      data: 'successful'
+    });
+  };
 
-  static preBill = async (req: Request, res: Response): Promise<Response> => {
+  static preBillData = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
 
     let order;
     try {
-      order = await getRepository(Order).findOne(id, {
+      order = await getRepository(Order).findOne({
+        where: { id: Number(id) },
         relations: ['products']
       });
-    }catch (e){
+    } catch (e) {
       console.log(e);
-      return res.status(400).send({ code: 1002, data: "Invalid Id"})
+      return res.status(400).send({
+        code: 1002,
+        data: 'Invalid Id'
+      });
     }
     const data: any = {
       stockProduct: 0,
       stockProductPrice: 0,
       preProduct: 0,
-      preProductPrice: 0
-    }
+      preProductPrice: 0,
+    };
     order.products.map((product) => {
-      console.log(product.count,product.product );
-      if (product.count <= product.product.count){
-        data.stockProduct += 1
-        data.stockProductPrice += product.count * product.price
+      console.log(product.count, product.product);
+      if (product.count <= product.product.count) {
+        data.stockProduct += 1;
+        data.stockProductPrice += product.count * product.price;
       } else {
-        data.preProduct += 1
-        data.preProductPrice += product.count * product.price
+        data.preProduct += 1;
+        data.preProductPrice += product.count * product.price;
       }
-    })
+    });
 
-    return res.status(200).send({ code: 200, data: data })
+    return res.status(200).send({
+      code: 200,
+      data: data
+    });
 
-  }
-  static preBillCreate = async (req: Request, res: Response): Promise<Response> => {
+  };
+  static status = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
-    const { deliveryPrice, percent } = req.body;
+    const { status } = req.body;
+
+    try {
+      await getRepository(Order).update({
+        id: Number(id)
+      }, {
+        status: status
+      });
+    } catch (e) {
+      console.log(e);
+      return res.status(409).send('error try again later');
+    }
+
+    return res.status(200).send({
+      code: 200,
+      data: 'Successful'
+    });
+  };
+
+  static preBill = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+    const {
+      deliveryPrice,
+      percent,
+      havale
+    } = req.body;
 
     let order;
     try {
-      order = await getRepository(Order).findOne(id, {
+      order = await getRepository(Order).findOne({
+        where: { id: Number(id) },
         relations: ['products', 'payments']
       });
-    }catch (e){
+    } catch (e) {
       console.log(e);
-      return res.status(400).send({ code: 1002, data: "Invalid Id"})
+      return res.status(400).send({
+        code: 1002,
+        data: 'Invalid Id'
+      });
     }
-    try{
+    try {
       const payment = new Payment();
       payment.price = order.price * percent / 100;
-      payment.isPre = true;
+      payment.isPre = order.status == 3;
+      payment.percent = percent;
+      payment.havale = havale;
       await getRepository(Payment).save(payment);
 
       const delivery = new Delivery();
@@ -158,17 +221,19 @@ class AdminOrderController {
 
       order.payments.push(payment);
       order.delivery = delivery;
-      order.status = 3
-      await getRepository(Order).save(order)
+      await getRepository(Order).save(order);
+
     } catch (e) {
       console.log(e);
       return res.status(409).send('error try again later');
     }
 
+    return res.status(200).send({
+      code: 200,
+      data: 'successful'
+    });
 
-    return res.status(200).send({ code: 200, data: 'successful' })
-
-  }
+  };
 }
 
 export default AdminOrderController;

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AddressRoutes } from "./address";
 import { AdminRoutes } from "./admin";
+import { ArticleRoutes } from './article';
 import { AttributeRoutes } from './attribute';
 import { CartRoutes } from './cart';
 import { CategoryRoutes } from './category';
@@ -26,5 +27,6 @@ routes.use("/attribute", new AttributeRoutes().router);
 routes.use("/menu", new MenuRoutes().router);
 routes.use("/search", new SearchRoutes().router);
 routes.use("/order", new OrderRoutes().router);
+routes.use("/article", new ArticleRoutes().router);
 routes.use("", new AuthRoutes().router);
 export default routes;

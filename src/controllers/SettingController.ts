@@ -29,30 +29,6 @@ class SettingController  {
     })
   }
 
-  static setEuroPrice = async (req: Request, res: Response): Promise<Response> => {
-    const { derham } = req.body;
-
-    let result = undefined;
-      try{
-        result = await this.settings().update({
-            key: 'euroPrice'
-          },
-          {
-            value: derham
-          }
-        )
-      }catch (e) {
-        return res.status(400).send({
-          code: 409,
-          data: "Something went wring"
-        });
-      }
-    return res.status(200).send({
-      code: 200,
-      data: result
-    })
-  }
-
 }
 
 export default SettingController;

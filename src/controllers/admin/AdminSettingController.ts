@@ -1,8 +1,14 @@
 import { validate } from 'class-validator';
 import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
+import process from 'process';
 import { getRepository } from 'typeorm';
+import { Product } from '../../entity/Product';
 import { Setting } from '../../entity/Setting';
 import { getUniqueSlug } from '../../utils/funs';
+import { MulterRequest } from '../../utils/types';
+import excelToJson from 'convert-excel-to-json';
 
 class AdminSettingController {
   static settings = () => getRepository(Setting);
@@ -122,6 +128,60 @@ class AdminSettingController {
       data: setting
     });
   };
+
+  static setEuroPrice = async (req: Request, res: Response): Promise<Response> => {
+    const { derham } = req.body;
+
+    let result = undefined;
+    try{
+      result = await this.settings().update({
+          key: 'derhamPrice'
+        },
+        {
+          value: derham
+        }
+      )
+    }catch (e) {
+      return res.status(400).send({
+        code: 409,
+        data: "Something went wring"
+      });
+    }
+    return res.status(200).send({
+      code: 200,
+      data: result
+    })
+  }
+  static excel = async (req: Request, res: Response): Promise<Response> => {
+    const data = excelToJson({ sourceFile: (req as any).file.path})
+    await Promise.all(data?.Feuil1?.slice(1,5).map(async (obj) => {
+      let product = await getRepository(Product).findOne({ where: { sku: obj.A } })
+
+      if (!product){
+        product = new Product();
+        product.sku = obj.A
+        product.productGroupId = null
+        product.isPre = true;
+        product.price = 0;
+        product.priceToman = 0;
+      }
+
+      if (obj.C <= 0 ){
+        product.status = 0;
+        product.count = 0;
+      } else {
+        product.status = 1;
+        product.count = obj.C
+      }
+
+      if (obj.D.toString().includes('20')){
+        product.nextAvailable = obj.D;
+      }
+
+      await getRepository(Product).save(product)
+    }))
+    return res.status(200).send({code: 200,data: data});
+  }
 
 }
 

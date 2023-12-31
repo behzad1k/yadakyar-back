@@ -45,7 +45,7 @@ export class Article {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToMany(() => ArticleCategory, articleCategory => articleCategory.articles, { onDelete: 'CASCADE' })
+  @ManyToMany(() => ArticleCategory, articleCategory => articleCategory.articles, { onDelete: 'CASCADE', eager: true })
   @JoinTable({
     name: 'article_category_article'
   })

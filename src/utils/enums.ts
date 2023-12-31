@@ -16,6 +16,7 @@ export enum dataTypes {
   string = 'string',
   number = 'number',
   datetime = 'datetime',
+  date = 'date',
   boolean = 'boolean',
   text = 'text',
   varchar = 'varchar',

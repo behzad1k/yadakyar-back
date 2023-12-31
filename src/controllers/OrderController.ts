@@ -7,6 +7,7 @@ import { Discount } from '../entity/Discount';
 import { Order } from '../entity/Order';
 import { OrderProduct } from '../entity/OrderProduct';
 import { OrderStatus } from '../entity/OrderStatus';
+import { Payment } from '../entity/Payment';
 import { Product } from '../entity/Product';
 import { Setting } from '../entity/Setting';
 import { User } from '../entity/User';
@@ -22,9 +23,8 @@ class OrderController {
   static addresses = () => getRepository(Address);
   static discounts = () => getRepository(Discount);
   static index = async (req: Request, res: Response): Promise<Response> => {
-    const token: any = jwtDecode(req.headers.authorization);
-    const userId: number = token.userId;
-    const users = await this.users().find();
+    const token: any = jwtDecode(req.headers.authorization || '');
+    const userId: number = token?.userId;
     let user;
     try {
       user = await this.users().findOneOrFail({
@@ -37,21 +37,11 @@ class OrderController {
       });
       return;
     }
+
     let orders;
     try {
-      if (user.role === 'WORKER') {
-        orders = await this.orders().find({
-          relations: ['attributes', 'product', 'address', 'worker']
-        });
-      } else {
-        orders = await this.orders().find({
-          where: {
-            userId: user.id,
-            inCart: false
-          },
-          relations: ['attributes', 'product', 'address', 'worker']
-        });
-      }
+      // @ts-ignore
+      orders = await this.orders().find({ where: { userId: user.id, inCart: false }, relations: { orderStatuses: true, delivery: true, products: { product: { productGroup: { category: true } } }, address: true, } });
     } catch (e) {
       console.log(e);
       res.status(400).send({
@@ -78,7 +68,7 @@ class OrderController {
     try {
       user = await this.users().findOneOrFail({
         where: { id: userId },
-        relations: ['orders']
+        relations: ['orders', 'address']
       });
     } catch (error) {
       res.status(400).send({
@@ -103,7 +93,8 @@ class OrderController {
           price: 0,
           userId: user.id,
           status: 1,
-          priceToman: 0
+          priceToman: 0,
+          addressId: user?.address?.id
         })
         order = order.generatedMaps[0]
       }
@@ -115,15 +106,17 @@ class OrderController {
       await Promise.all(
       products.map(async (product, index) => {
         const orderProduct = await getRepository(OrderProduct).findOne({
-          orderId: order.id,
-          productId: product
+          where: {
+            orderId: order.id,
+            productId: product
+          }
         });
 
         if (orderProduct){
           const newCount = Number(orderProduct.count) + Number(counts[index]);
           await getRepository(OrderProduct).update(orderProduct.id, { count: newCount });
         } else {
-          const productObj = await getRepository(Product).findOne({ id: product })
+          const productObj = await getRepository(Product).findOne({ where: { id: product }})
           await getRepository(OrderProduct).insert({
             orderId: order.id,
             productId: product,
@@ -205,7 +198,7 @@ class OrderController {
     // }
     let orderProducts = [];
     try{
-      orderProducts = await getRepository(OrderProduct).find({ orderId: order.id })
+      orderProducts = await getRepository(OrderProduct).find({ where: { orderId: order.id } })
     }catch (e){
       return res.status(400).send({ code: 409, data: 'Something went wrong'})
     }
@@ -254,7 +247,6 @@ class OrderController {
       orderObj = await this.orders().findOneOrFail({
         where: {
           id: orderId,
-          status: orderStatus.Assigned,
         }
       });
     } catch (error) {
@@ -373,8 +365,10 @@ class OrderController {
     let order;
     try {
       order = await this.orders().find({
-        userId: userId,
-        inCart: true,
+        where: {
+          userId: userId,
+          inCart: true,
+        }
       });
 
       return res.status(200).send({
@@ -436,6 +430,57 @@ class OrderController {
       data: orderStatuses
     })
   }
+
+  static billCreate = async (req: Request, res: Response): Promise<Response> => {
+    const token: any = jwtDecode(req.headers.authorization);
+    const userId: number = token.userId;
+    const { bank, code, date } = req.body;
+    const { id } = req.params;
+    let order;
+    try {
+      order = await this.orders().findOne({ where: { id: Number(id) }, relations: ['payments'] });
+
+      const payment = order.payments.find((e) => e.isPre == (order.status == 3))
+      payment.bank = bank;
+      payment.code = code;
+      payment.date = date;
+      await getRepository(Payment).save(payment);
+
+      order.status = order.status == 3 ? 4 : 7;
+      await getRepository(Order).save(order);
+
+      return res.status(200).send({
+        code: 200,
+        data: 'Successful'
+      });
+    } catch (e) {
+      console.log(e);
+      res.status(409).send({
+        code: 409,
+        data: 'error try again later'
+      });
+    }
+  }
+
+  static cancel = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+
+    try {
+      await getRepository(Order).update({
+        id: Number(id)
+      }, {
+        status: 10
+      });
+    } catch (e) {
+      console.log(e);
+      return res.status(409).send('error try again later');
+    }
+
+    return res.status(200).send({
+      code: 200,
+      data: 'Successful'
+    });
+  };
 }
 
 export default OrderController;

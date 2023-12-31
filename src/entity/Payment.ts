@@ -18,6 +18,12 @@ export class Payment {
   @Column(dataTypes.integer)
   price: number;
 
+  @Column(dataTypes.integer)
+  percent: number;
+
+  @Column(dataTypes.integer)
+  havale: number;
+
   @Column(dataTypes.text, { nullable: true })
   code: string;
 

@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Length } from "class-validator";
 import { dataTypes } from '../utils/enums';
+import { Address } from './Address';
 import { City } from './City';
 import { Order } from "./Order";
 import { PaymentMethod } from './PaymentMethod';
@@ -20,11 +21,15 @@ export class Province {
   id: number;
 
   @Column(dataTypes.text)
-  name: string;
+  title: string;
 
   @Column(dataTypes.text)
   slug: string;
 
   @OneToMany(() => City, city => city.province, { eager: true })
   cities: City[]
+
+  @OneToMany(() => Address, address => address.province, { eager: true })
+  addresses: Address[]
+
 }

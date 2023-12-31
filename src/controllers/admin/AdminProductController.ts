@@ -20,7 +20,8 @@ class AdminProductController {
       if (productGroupId){
         where['productGroupId'] = productGroupId
       }
-      products = await this.products().find({ where: where, relations: ['attributes'] });
+      where['isPre'] = false;
+      products = await this.products().find({ where: where, relations: ['attributes', 'productGroup', 'productGroup.category'] });
     } catch (e) {
       return res.status(501).send({
         code: 501,
@@ -33,6 +34,40 @@ class AdminProductController {
       data: products
     });
   };
+
+  static preProducts = async (req: Request, res: Response): Promise<Response> => {
+    let products = null;
+    try {
+      products = await this.products().find({ where: { isPre: true } });
+    } catch (e) {
+      return res.status(501).send({
+        code: 501,
+        data: 'Unknown Error'
+      });
+    }
+
+    return res.status(200).send({
+      code: 200,
+      data: products
+    });
+  };
+  static deletePre = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+
+    try {
+      await getRepository(Product).delete({
+        id: Number(id)
+      })
+    }catch (e){
+      console.log(e);
+      return res.status(501).send({
+        code: 1002,
+        data: 'Invalid Id'
+      });
+    }
+
+  return res.status(200).send({ code: 200, data: 'Successful' })
+  }
 
   static create = async (req: Request, res: Response): Promise<Response> => {
     const {

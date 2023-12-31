@@ -1,38 +1,45 @@
-import { Request, Response } from "express";
-import { getRepository } from "typeorm";
-import { validate } from "class-validator";
-import config from "../config/config";
-import { User } from "../entity/User";
-import * as jwt from "jsonwebtoken";
-import jwtDecode from "jwt-decode";
-import {Address} from "../entity/Address";
+import { validate } from 'class-validator';
+import { Request, Response } from 'express';
+import jwtDecode from 'jwt-decode';
+import { getRepository } from 'typeorm';
+import { Address } from '../entity/Address';
+import { Province } from '../entity/Province';
+import { User } from '../entity/User';
 
 class AddressController {
-  static users = () => getRepository(User)
+  static users = () => getRepository(User);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
-    const token: any = jwtDecode(req.headers.authorization);
-    const id: number = token.userId;
-    let user;
+    const token: any = jwtDecode(req.headers.authorization || '');
+    const id: number = token?.userId;
+    let address = undefined;
     try {
-      user = await this.users().findOneOrFail({
-        where: { id: id },
-        relations: ['addresses']
+      address = await getRepository(Address).findOne({
+        where: { userId: id },
+        relations: ['province', 'city']
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send({
+        code: 400,
+        data: 'Invalid UserId'
       });
     }
-    catch (error) {
-      res.status(400).send({code: 400, data: "Invalid UserId"});
-      return;
-    }
-    const addresses = user.addresses;
+
     return res.status(200).send({
       code: 200,
-      data: addresses
-    })
-  }
+      data: address
+    });
+  };
 
   static create = async (req: Request, res: Response): Promise<Response> => {
-    const { title, description, longitude, latitude, phoneNumber } = req.body;
+    const {
+      province,
+      city,
+      phone,
+      postal,
+      text
+    } = req.body;
     const token: any = jwtDecode(req.headers.authorization);
     const id: number = token.userId;
     let user;
@@ -41,93 +48,109 @@ class AddressController {
         where: { id: id },
         relations: ['addresses']
       });
+    } catch (error) {
+      return res.status(400).send({
+        code: 400,
+        data: 'Invalid UserId'
+      });
     }
-    catch (error) {
 
-      res.status(400).send({code: 400, data: "Invalid UserId"});
-      return;
-    }
     const address = new Address();
-    address.title = title;
-    address.description = description;
-    address.longitude = longitude;
-    address.latitude = latitude;
-    address.district = 1;
-    address.phoneNumber = phoneNumber;
+    address.phoneNumber = phone;
+    address.postal = postal;
+    address.cityId = city;
+    address.provinceId = province;
+    address.text = text;
     address.userId = user.id;
+    address.title = 'آدرس ۱';
+
     const errors = await validate(address);
     if (errors.length > 0) {
       return res.status(400).send(errors);
     }
+
     const addressRepository = getRepository(Address);
+
     try {
       await addressRepository.save(address);
     } catch (e) {
-      return res.status(409).send({"code": 409});
+      return res.status(409).send({
+        code: 409,
+        data: 'Something went wrong'
+      });
     }
-    return res.status(201).send({ code: 201, data: address});
+    return res.status(201).send({
+      code: 201,
+      data: address
+    });
   };
 
   static update = async (req: Request, res: Response): Promise<Response> => {
+    const {
+      province,
+      city,
+      phone,
+      postal,
+      text
+    } = req.body;
     const token: any = jwtDecode(req.headers.authorization);
-    const userId: number = token.userId;
-    const { addressId, title, description, longitude, latitude, phoneNumber, district } = req.body;
-    const addressRepository = getRepository(Address);
-    let address: Address, user: User;
+    const id: number = token.userId;
+    let address;
     try {
-      user = await this.users().findOneOrFail({
-        where: { id: userId },
+      address = await getRepository(Address).findOneOrFail({
+        where: { userId: id },
+      });
+    } catch (error) {
+      return res.status(400).send({
+        code: 1002,
+        data: 'Invalid Id'
       });
     }
-    catch (error) {
-      res.status(400).send({code: 400, data: "Invalid UserId"});
-      return;
-    }
-    try {
-      address = await addressRepository.findOneOrFail(addressId);
-    } catch (error) {
-      return res.status(400).send({code: 400, data:"Invalid AddressId"});
-    }
-    if (address.userId !== user.id){
-      return res.status(403).send({code: 403, data:"Access Forbidden"})
-    }
-    if (title)
-      address.title = title;
-    if (description)
-      address.description = description;
-    if (longitude)
-      address.longitude = longitude;
-    if (latitude)
-      address.latitude = latitude;
-    if (phoneNumber)
-      address.phoneNumber = phoneNumber;
-    if (district)
-      address.district = district
+
+    address.phoneNumber = phone;
+    address.postal = postal;
+    address.cityId = city;
+    address.provinceId = province;
+    address.text = text;
+    address.userId = id;
+    address.title = 'آدرس ۱';
+
     const errors = await validate(address);
     if (errors.length > 0) {
       return res.status(400).send(errors);
     }
+
+    const addressRepository = getRepository(Address);
+
     try {
       await addressRepository.save(address);
     } catch (e) {
-      return res.status(409).send("error try again later");
+      return res.status(409).send({
+        code: 409,
+        data: 'Something went wrong'
+      });
     }
-    return res.status(200).send({code: 400, data: address});
+    return res.status(201).send({
+      code: 200,
+      data: address
+    });
   };
 
   static delete = async (req: Request, res: Response): Promise<Response> => {
     const token: any = jwtDecode(req.headers.authorization);
     const userId: number = token.userId;
-    const id: number = req.body.AddressId
+    const id: number = req.body.AddressId;
     let user: User;
     try {
       user = await this.users().findOneOrFail({
         where: { id: userId },
         relations: ['addresses']
       });
-    }
-    catch (error) {
-      res.status(400).send({code: 400, data: "Invalid UserId"});
+    } catch (error) {
+      res.status(400).send({
+        code: 400,
+        data: 'Invalid UserId'
+      });
       return;
     }
     const addressRepository = getRepository(Address);
@@ -137,19 +160,40 @@ class AddressController {
         where: { id: id },
       });
     } catch (error) {
-      res.status(400).send({code: 400, data:"Invalid Id"});
+      res.status(400).send({
+        code: 400,
+        data: 'Invalid Id'
+      });
       return;
     }
-    if (address.userId !== user.id){
-      return res.status(403).send({code: 403, data:"Access Forbidden"})
+    if (address.userId !== user.id) {
+      return res.status(403).send({
+        code: 403,
+        data: 'Access Forbidden'
+      });
     }
-    try{
+    try {
       await addressRepository.delete(id);
 
-    }catch (e){
-      res.status(409).send("error try again later");
+    } catch (e) {
+      res.status(409).send('error try again later');
     }
     return res.status(204).send();
+  };
+
+  static states = async (req: Request, res: Response): Promise<Response> => {
+    let states;
+    try {
+      states = await getRepository(Province).find({ relations: ['cities'] });
+    } catch (e) {
+      console.log(e);
+      res.status(409).send('error try again later');
+    }
+
+    return res.status(200).send({
+      code: 200,
+      data: states
+    });
   };
 
 }

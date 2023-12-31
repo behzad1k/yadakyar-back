@@ -13,6 +13,7 @@ import { Address } from './Address';
 import { Discount } from './Discount';
 import { Order } from './Order';
 import 'reflect-metadata';
+import { ProductFavorite } from './ProductFavorite';
 
 @Entity()
 export class User {
@@ -21,9 +22,6 @@ export class User {
 
   @Column(dataTypes.text)
   phoneNumber: string;
-
-  @Column(dataTypes.text)
-  username: string;
 
   @Column(dataTypes.text, {
     nullable: true
@@ -58,16 +56,13 @@ export class User {
   @Column(dataTypes.boolean, { default: true })
   isActive
 
-  @Column(dataTypes.text, { nullable: false })
+  @Column(dataTypes.text)
   password: string;
 
   @Column(dataTypes.integer)
   status: number;
 
-  @Column(dataTypes.integer)
-  postalCode: number;
-
-  @Column(dataTypes.text, { nullable: false })
+  @Column(dataTypes.varchar, { default: 'USER' })
   role: string;
 
   @Column(dataTypes.datetime)
@@ -89,10 +84,12 @@ export class User {
   addresses: Address[];
 
   @OneToMany(() => Order, order => order.user, {
-    eager: true,
     onDelete: 'CASCADE'
   })
   orders: Order[];
+
+  @OneToMany(() => ProductFavorite, productFavorite => productFavorite.user, { onDelete: 'CASCADE' })
+  favorites: ProductFavorite[]
 
   @OneToMany(() => Discount, discount => discount.user, {
     eager: true,

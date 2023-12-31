@@ -1,67 +1,80 @@
-import { Request, Response } from "express";
-import { getRepository, Not } from "typeorm";
-import { validate } from "class-validator";
-import { Order } from "../../entity/Order";
-import { Product } from "../../entity/Product";
-import { User } from "../../entity/User";
+import { validate } from 'class-validator';
+import { Request, Response } from 'express';
+import { getRepository, Not } from 'typeorm';
+import { Order } from '../../entity/Order';
+import { Product } from '../../entity/Product';
+import { User } from '../../entity/User';
 
 import { roles } from '../../utils/enums';
-import { getObjectValue, getUniqueSlug } from "../../utils/funs";
+import { getObjectValue } from '../../utils/funs';
 
 class AdminUserController {
-  static users = () => getRepository(User)
-  static orders = () => getRepository(Order)
-  static products = () => getRepository(Product)
+  static users = () => getRepository(User);
+  static orders = () => getRepository(Order);
+  static products = () => getRepository(Product);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
-    const { type, product } = req.query
+    const {
+      type,
+      product
+    } = req.query;
     let users, productObj;
-    const validType = getObjectValue(roles,type?.toString().toUpperCase())
-    users = await this.users().find({
-        relations: ['product']
-      })
-    return res.status(200).send({'code': 200, 'data': users})
-  }
+    const validType = getObjectValue(roles, type?.toString().toUpperCase());
+    users = await this.users().find({});
+    return res.status(200).send({
+      'code': 200,
+      'data': users
+    });
+  };
   static create = async (req: Request, res: Response): Promise<Response> => {
-    const { name, lastName, nationalCode, role, phoneNumber, product } = req.body;
-    let productObj;
-    if (!phoneNumber && await this.users().findOne({
+    const {
+      name,
+      lastName,
+      nationalCode,
+      phoneNumber,
+      bankCard,
+      password,
+      email,
+      role,
+      status
+    } = req.body;
+
+    if (phoneNumber && await this.users().findOne({
       where: {
         phoneNumber: phoneNumber
       }
-    })){
-      return res.status(400).send({"code": 400, 'data': 'Duplicate PhoneNumber'})
+    })) {
+      return res.status(400).send({
+        'code': 400,
+        'data': 'Duplicate PhoneNumber'
+      });
     }
-    if (!nationalCode && await this.users().findOne({
+
+    if (nationalCode && await this.users().findOne({
       where: {
         nationalCode: nationalCode
       }
-    })){
-      return res.status(400).send({"code": 400, 'data': 'Duplicate NationalCode'})
+    })) {
+      return res.status(400).send({
+        code: 400,
+        data: 'Duplicate NationalCode'
+      });
     }
-    if (!getObjectValue(roles,role)){
-      return res.status(400).send({"code": 400, 'data': 'Invalid Role'})
-    }
+
     const user = new User();
-    if (product){
-      try{
-        productObj = await this.products().findOneOrFail({
-          // where: {
-          //   slug: product as string
-          // }
-        })
-        // user.product = productObj
-      }catch(e){
-        return res.status(400).send({"code": 400, 'data': 'Invalid Product'})
-      }
+    user.name = name;
+    user.lastName = lastName;
+    user.nationalCode = nationalCode;
+    user.phoneNumber = phoneNumber;
+    user.email = email;
+    user.bankCard = bankCard;
+    user.password = password;
+    user.status = status;
+    if (role == 'SUPER_ADMIN' || role == 'USER') {
+      user.role = role;
     }
-    user.name = name
-    user.lastName = lastName
-    user.nationalCode = nationalCode
-    user.role = role
-    user.phoneNumber = phoneNumber
-    user.password = '12345678'
     await user.hashPassword();
+
     const errors = await validate(user);
     if (errors.length > 0) {
       res.status(400).send(errors);
@@ -70,49 +83,75 @@ class AdminUserController {
     try {
       await this.users().save(user);
     } catch (e) {
-      res.status(409).send({"code": 409});
+      console.log(e);
+      res.status(409).send({
+        code: 409,
+        data: ''
+      });
       return;
     }
-    return res.status(201).send({ code: 201, data: user});
+    return res.status(201).send({
+      code: 201,
+      data: user
+    });
   };
 
   static update = async (req: Request, res: Response): Promise<Response> => {
-    const { userId, name, lastName, nationalCode, role, phoneNumber } = req.body;
+    const {
+      userId,
+      name,
+      lastName,
+      nationalCode,
+      role,
+      phoneNumber
+    } = req.body;
     let user: User;
-    try{
-      user = await this.users().findOneOrFail(userId)
-    }catch (e){
-      return res.status(400).send({"code": 400, 'data': 'Invalid UserId'})
+    try {
+      user = await this.users().findOneOrFail(userId);
+    } catch (e) {
+      return res.status(400).send({
+        'code': 400,
+        'data': 'Invalid UserId'
+      });
     }
     if (!phoneNumber && await this.users().findOne({
       where: {
         id: Not(userId),
         phoneNumber: phoneNumber
       }
-    })){
-      return res.status(400).send({"code": 400, 'data': 'Duplicate PhoneNumber'})
+    })) {
+      return res.status(400).send({
+        'code': 400,
+        'data': 'Duplicate PhoneNumber'
+      });
     }
     if (!nationalCode && await this.users().findOne({
       where: {
         id: Not(userId),
         nationalCode: nationalCode
       }
-    })){
-      return res.status(400).send({"code": 400, 'data': 'Duplicate NationalCode'})
+    })) {
+      return res.status(400).send({
+        'code': 400,
+        'data': 'Duplicate NationalCode'
+      });
     }
-    if (!getObjectValue(roles,role)){
-      return res.status(400).send({"code": 400, 'data': 'Invalid Status'})
+    if (!getObjectValue(roles, role)) {
+      return res.status(400).send({
+        'code': 400,
+        'data': 'Invalid Status'
+      });
     }
     if (name)
-      user.name = name
+      user.name = name;
     if (lastName)
-      user.lastName = lastName
-    if(nationalCode)
-      user.nationalCode = nationalCode
+      user.lastName = lastName;
+    if (nationalCode)
+      user.nationalCode = nationalCode;
     if (role)
-      user.role = role
+      user.role = role;
     if (phoneNumber)
-      user.phoneNumber = phoneNumber
+      user.phoneNumber = phoneNumber;
     const errors = await validate(user);
     if (errors.length > 0) {
       res.status(400).send(errors);
@@ -121,29 +160,38 @@ class AdminUserController {
     try {
       await this.users().save(user);
     } catch (e) {
-      res.status(409).send({"code": 409});
+      res.status(409).send({ 'code': 409 });
       return;
     }
-    return res.status(200).send({ code: 200, data: user});
+    return res.status(200).send({
+      code: 200,
+      data: user
+    });
   };
 
   static delete = async (req: Request, res: Response): Promise<Response> => {
-    const userId: number = req.body.userId
+    const userId: number = req.body.userId;
     let user;
     try {
       user = await this.users().findOneOrFail({
         where: { id: userId },
       });
     } catch (error) {
-      res.status(400).send({code: 400, data:"Invalid UserId"});
+      res.status(400).send({
+        code: 400,
+        data: 'Invalid UserId'
+      });
       return;
     }
-    try{
+    try {
       await this.users().delete(user.id);
-    }catch (e){
-      res.status(409).send("error try again later");
+    } catch (e) {
+      res.status(409).send('error try again later');
     }
-    return res.status(204).send({code: 204, data: "Success"});
+    return res.status(204).send({
+      code: 204,
+      data: 'Success'
+    });
   };
 
   static single = async (req: Request, res: Response): Promise<Response> => {
@@ -167,15 +215,26 @@ class AdminUserController {
   };
 
   static workerOff = async (req: Request, res: Response): Promise<Response> => {
-    const { workerId, date, fromTime, toTime } = req.body;
+    const {
+      workerId,
+      date,
+      fromTime,
+      toTime
+    } = req.body;
     let worker;
-    try{
-      worker = await this.users().findOneOrFail(workerId)
-    }catch (e){
-      return res.status(400).send({ code: 400, data: "Invalid WorkerId" })
+    try {
+      worker = await this.users().findOneOrFail(workerId);
+    } catch (e) {
+      return res.status(400).send({
+        code: 400,
+        data: 'Invalid WorkerId'
+      });
     }
-    return res.status(200).send({code: 200, data: {}})
-  }
+    return res.status(200).send({
+      code: 200,
+      data: {}
+    });
+  };
 }
 
 export default AdminUserController;

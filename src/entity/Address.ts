@@ -7,7 +7,9 @@ import {
   ManyToOne, JoinColumn, OneToMany, 
 } from 'typeorm';
 import { dataTypes } from '../utils/enums';
+import { City } from './City';
 import { Order } from "./Order";
+import { Province } from './Province';
 import { User } from "./User";
 
 @Entity()
@@ -15,28 +17,34 @@ export class Address {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column(dataTypes.text, {})
+  @Column(dataTypes.text, { nullable: true })
   title: string;
 
   @Column(dataTypes.number)
   userId: number;
 
+  @Column(dataTypes.number)
+  cityId: number;
+
+  @Column(dataTypes.number)
+  provinceId: number;
+
   @Column(dataTypes.text)
-  description: string;
+  text: string;
+
+  @Column(dataTypes.text)
+  postal: string;
 
   @Column(dataTypes.text, {
     nullable: true
   })
   phoneNumber: string;
 
-  @Column(dataTypes.text)
+  @Column(dataTypes.text, { nullable: true })
   longitude: string;
 
-  @Column(dataTypes.text)
+  @Column(dataTypes.text, { nullable: true })
   latitude: string;
-
-  @Column(dataTypes.integer)
-  district?: number;
 
   @Column(dataTypes.datetime)
   @CreateDateColumn()
@@ -46,8 +54,16 @@ export class Address {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @ManyToOne(() => City, (city) => city.addresses, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: "cityId", referencedColumnName: "id"})
+  city: City
+
+  @ManyToOne(() => Province, (province) => province.addresses, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: "provinceId", referencedColumnName: "id"})
+  province: Province
+
   @ManyToOne(() => User, (user) => user.addresses, { onDelete: 'CASCADE' })
-  @JoinColumn({ name:"userId", referencedColumnName: "id"})
+  @JoinColumn({ name: "userId", referencedColumnName: "id"})
   user: User
 
   @OneToMany(() => Order, (order) => order.address, { onDelete: 'CASCADE' })

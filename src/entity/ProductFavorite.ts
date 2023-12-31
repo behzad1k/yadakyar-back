@@ -9,25 +9,20 @@ import {
 import { Length } from "class-validator";
 import { dataTypes } from '../utils/enums';
 import { Order } from "./Order";
-import { OrderProduct } from './OrderProduct';
-import { OrderStatus } from './OrderStatus';
 import { Product } from './Product';
 import { ProductGroup } from './ProductGroup';
 import { User } from "./User";
 import "reflect-metadata";
 @Entity()
-export class OrderStatusOrder {
+export class ProductFavorite {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column(dataTypes.integer)
-  orderId: number;
+  productId: number;
 
   @Column(dataTypes.integer)
-  statusId: number;
-
-  @Column(dataTypes.text, { nullable: true })
-  description: string;
+  userId: number;
 
   @Column(dataTypes.datetime)
   @CreateDateColumn()
@@ -37,18 +32,15 @@ export class OrderStatusOrder {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => OrderStatus, orderStatus => orderStatus.orders, { onDelete: 'CASCADE', eager: true })
+  @ManyToOne(() => Product, product => product.favorites, { onDelete: 'CASCADE', eager: true })
   @JoinColumn({
-    name: 'statusId',
-    referencedColumnName: 'id'
+    name: 'productId'
   })
-  orderStatus: OrderStatus
+  product: Product
 
-  @ManyToOne(() => Order, order => order.orderStatuses, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, user => user.favorites, { onDelete: 'CASCADE' })
   @JoinColumn({
-    name: 'orderId',
-    referencedColumnName: 'id'
+    name: 'userId'
   })
-  order: Order
-
+  user: User
 }

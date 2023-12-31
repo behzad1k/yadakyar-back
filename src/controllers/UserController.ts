@@ -52,11 +52,11 @@ class UserController {
 
   static login = async (req: Request, res: Response): Promise<Response> => {
     const {
-      username,
+      phoneNumber,
       password
     } = req.body;
 
-    if (!(username)) {
+    if (!(phoneNumber)) {
       return res.status(400).send({ 'message': 'Phone number not set' });
     }
 
@@ -64,7 +64,7 @@ class UserController {
     let user: User;
 
     try{
-      user = await this.users().findOneOrFail({ where: { username: username } });
+      user = await this.users().findOneOrFail({ where: { phoneNumber: phoneNumber } });
     }catch (e){
       return res.status(403).send({ code: 1000, data: "User Not Found"})
     }
@@ -81,7 +81,7 @@ class UserController {
     try{
       await this.users().update(user.id, { lastEntrance: new Date() });
     }catch (e){
-
+      console.log(e);
     }
 
     return res.status(200).send({
@@ -129,15 +129,10 @@ class UserController {
     const token: any = jwtDecode(req.headers.authorization);
     const id: number = token.userId;
     let user;
-    console.log('here');
     try {
       user = await this.users().findOneOrFail({
-        relations: ['orders'],
         where: {
-          id: id,
-          orders: {
-            id: 1
-          }
+          id: id
         }
       });
     } catch (e) {

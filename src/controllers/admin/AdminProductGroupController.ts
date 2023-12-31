@@ -75,7 +75,7 @@ class AdminProductGroupController {
     let tag = null;
     try{
       tag = await this.tags().findOneOrFail({
-        id: tagId
+        where: { id: tagId }
       })
     }catch (e){
       console.log(e);

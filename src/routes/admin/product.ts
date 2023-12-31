@@ -11,6 +11,8 @@ export class AdminProductRoutes {
 
   routes() {
     this.router.get("", AdminProductController.index);
+    this.router.get("/pre/list", AdminProductController.preProducts);
+    this.router.delete("/pre/:id", AdminProductController.deletePre);
     this.router.get("/:id", AdminProductController.single);
     this.router.post("", AdminProductController.create);
     this.router.put("/:id", AdminProductController.update);

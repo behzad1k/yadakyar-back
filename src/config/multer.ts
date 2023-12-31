@@ -16,7 +16,7 @@ const multerConfig = (path: string) => {
     fileSize: 8000000 // 1000000 Bytes = 1 MB
   },
   fileFilter(req, file, cb) {
-    if (!file.originalname.match(/\.(png|jpg)$/)) {
+    if (!file.originalname.match(/\.(png|jpg|xlsx)$/)) {
       return cb(new Error('Please upload a Image'))
     }
     cb(undefined, true)

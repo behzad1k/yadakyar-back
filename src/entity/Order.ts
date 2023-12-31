@@ -48,7 +48,7 @@ export class Order {
   @Column(dataTypes.integer)
   userId?: number;
 
-  @Column(dataTypes.integer)
+  @Column(dataTypes.integer, { default: 1 })
   status: number;
 
   @Column(dataTypes.integer, { nullable: true })

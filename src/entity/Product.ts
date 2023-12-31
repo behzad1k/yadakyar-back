@@ -6,6 +6,7 @@ import { AttributeProduct } from './AttributeProduct';
 import { Media } from './Media';
 import { Order } from './Order';
 import { OrderProduct } from './OrderProduct';
+import { ProductFavorite } from './ProductFavorite';
 import { ProductGroup } from './ProductGroup';
 
 @Entity()
@@ -22,23 +23,29 @@ export class Product {
   @Column(dataTypes.integer)
   priceToman: number;
 
-  @Column(dataTypes.integer)
+  @Column(dataTypes.integer, { nullable: true })
   wholesomePrice: number;
 
-  @Column(dataTypes.integer)
+  @Column(dataTypes.integer, { nullable: true })
   discountPrice: number;
 
   @Column(dataTypes.integer)
   status: number;
 
-  @Column(dataTypes.integer)
+  @Column(dataTypes.boolean, { default: false })
+  isPre: boolean;
+
+  @Column(dataTypes.integer, { nullable: true })
   productGroupId: number;
 
-  @Column(dataTypes.integer)
+  @Column(dataTypes.integer, { nullable: true })
   mediaId: number;
 
   @Column(dataTypes.text)
   sku: string;
+
+  @Column(dataTypes.varchar, { default: null })
+  nextAvailable: string;
 
   @Column(dataTypes.datetime)
   @CreateDateColumn()
@@ -67,6 +74,9 @@ export class Product {
 
   @OneToMany(() => OrderProduct, orderProduct => orderProduct.product, { onDelete: 'CASCADE' })
   orders: Order[]
+
+  @OneToMany(() => ProductFavorite, productFavorite => productFavorite.product, { onDelete: 'CASCADE' })
+  favorites: ProductFavorite[]
 
 
 }

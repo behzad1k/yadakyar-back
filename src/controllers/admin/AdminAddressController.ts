@@ -20,7 +20,7 @@ class AdminAddressController {
     const { title, description, longitude, latitude, phoneNumber, userId } = req.body;
     const address = new Address();
     address.title = title;
-    address.description = description;
+    // address.description = description;
     address.longitude = longitude;
     address.latitude = latitude;
     address.phoneNumber = phoneNumber;
@@ -50,7 +50,7 @@ class AdminAddressController {
     if (title)
       address.title = title;
     if (description)
-      address.description = description;
+      // address.description = description;
     if (longitude)
       address.longitude = longitude;
     if (latitude)
