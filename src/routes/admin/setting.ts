@@ -19,7 +19,7 @@ export class AdminSettingRoutes {
     this.router.get("/:key", AdminSettingController.single);
     this.router.post("", AdminSettingController.create);
     this.router.put("/derhamPrice", AdminSettingController.setEuroPrice);
-    this.router.post("/excel",multer(multerConfig('excel')).single('excel'), AdminSettingController.excel);
+    this.router.post("/excel",multer(multerConfig('uploads/excel')).single('excel'), AdminSettingController.excel);
     this.router.put("/:key", AdminSettingController.update);
     this.router.delete("/:id", AdminSettingController.delete);
   }

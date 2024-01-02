@@ -130,7 +130,7 @@ class AdminSettingController {
   };
 
   static setEuroPrice = async (req: Request, res: Response): Promise<Response> => {
-    const { derham } = req.body;
+    const { value } = req.body;
 
     let result = undefined;
     try{
@@ -138,7 +138,7 @@ class AdminSettingController {
           key: 'derhamPrice'
         },
         {
-          value: derham
+          value: value
         }
       )
     }catch (e) {
@@ -154,7 +154,7 @@ class AdminSettingController {
   }
   static excel = async (req: Request, res: Response): Promise<Response> => {
     const data = excelToJson({ sourceFile: (req as any).file.path})
-    await Promise.all(data?.Feuil1?.slice(1,5).map(async (obj) => {
+    await Promise.all(data?.Feuil1?.slice(1,data?.Feuil1?.length - 1).map(async (obj) => {
       let product = await getRepository(Product).findOne({ where: { sku: obj.A } })
 
       if (!product){
@@ -174,6 +174,9 @@ class AdminSettingController {
         product.count = obj.C
       }
 
+      if (obj.E > 0){
+        product.price = obj.E
+      }
       if (obj.D.toString().includes('20')){
         product.nextAvailable = obj.D;
       }

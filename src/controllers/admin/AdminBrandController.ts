@@ -1,7 +1,12 @@
 import { validate } from 'class-validator';
 import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
+import process from 'process';
 import { getRepository } from 'typeorm';
 import { Brand } from '../../entity/Brand';
+import { Catalog } from '../../entity/Catalog';
+import { Media } from '../../entity/Media';
 import { getUniqueSlug } from '../../utils/funs';
 
 class AdminBrandController {
@@ -28,13 +33,15 @@ class AdminBrandController {
     const {
       title,
       description,
+      catalogTitles,
+      catalogSorts
     } = req.body;
-
     const brand = new Brand();
 
     brand.title = title;
     brand.description = description;
     brand.slug = await getUniqueSlug(this.brands(), title);
+
     const errors = await validate(brand);
     if (errors.length > 0) {
       return res.status(400).send(errors);
@@ -48,6 +55,50 @@ class AdminBrandController {
         code: 409,
         data: 'error try again later'
       });
+    }
+    const medias = [];
+    try{
+      await Promise.all(
+        (req as any).files.map(async (file: any, index) => {
+          const newName = await getUniqueSlug(getRepository(Media), brand.slug + (++index), 'title');
+          const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/catalog/' + newName + path.parse(file.originalname).ext;
+          const newPath = path.join(process.cwd(), 'public', 'uploads', 'catalog', newName + path.parse(file.originalname).ext);
+          const oldPath = path.join(process.cwd(), file.path)
+          fs.exists(oldPath, () => fs.rename(oldPath, newPath, (e) => console.log(e)))
+          medias.push(
+            await getRepository(Media).insert({
+                size: file.size,
+                title: newName,
+                originalTitle: file.originalname,
+                mime: file.mimetype,
+                morphType: 'Brand',
+                morphId: brand.id,
+                path: newPath,
+                url: newUrl
+              }
+            ))
+        }))
+    }catch (e){
+      console.log(e);
+    }
+
+    for (let i = 0; i < catalogTitles.length; i++) {
+      try{
+        const catalog = new Catalog();
+
+        catalog.brandId = brand.id;
+        catalog.title = catalogTitles[i];
+        catalog.sort = catalogSorts[i];
+        catalog.slug = await getUniqueSlug(getRepository(Catalog), catalogTitles[i]);
+        catalog.mediaId = medias[i].raw.insertId
+        await getRepository(Catalog).save(catalog)
+      }catch (e){
+        console.log(e);
+        return res.status(409).send({
+          code: 409,
+          data: 'error try again later catalog'
+        });
+      }
     }
     return res.status(201).send({
       code: 200,

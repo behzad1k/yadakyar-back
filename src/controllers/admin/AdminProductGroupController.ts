@@ -104,8 +104,8 @@ class AdminProductGroupController {
         // @ts-ignore
         req.files.map(async (file: any, index) => {
           const newName = await getUniqueSlug(getRepository(Media), productGroup.slug + (++index), 'title');
-          const newUrl = req.protocol + '://' + req.get('host') + '/public/images/product/' + newName + path.parse(file.originalname).ext;
-          const newPath = path.join(process.cwd(), 'public', 'images', 'product', newName + path.parse(file.originalname).ext);
+          const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/product/' + newName + path.parse(file.originalname).ext;
+          const newPath = path.join(process.cwd(), 'public', 'uploads', 'product', newName + path.parse(file.originalname).ext);
           const oldPath = path.join(process.cwd(), file.path)
 
           fs.existsSync(oldPath) && fs.rename(oldPath, newPath, (e) => console.log(e))

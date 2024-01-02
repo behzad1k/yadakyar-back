@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Length } from "class-validator";
 import { dataTypes } from '../utils/enums';
+import { Catalog } from './Catalog';
 import { Order } from "./Order";
 import { Product } from './Product';
 import { ProductGroup } from './ProductGroup';
@@ -34,6 +35,9 @@ export class Brand {
   @Column(dataTypes.datetime)
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => Catalog, catalog => catalog.brand)
+  catalogs: Catalog[]
 
   @ManyToMany(() => ProductGroup, productGroup => productGroup.tags, { onDelete: 'CASCADE' })
   @JoinTable({

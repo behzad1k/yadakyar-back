@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Length } from "class-validator";
 import { dataTypes } from '../utils/enums';
+import { Catalog } from './Catalog';
 import { Order } from "./Order";
 import { Product } from './Product';
 import { ProductGroup } from './ProductGroup';
@@ -52,5 +53,8 @@ export class Media {
 
   @OneToMany(() => Product, product => product.media)
   products: Product[]
+
+  @OneToMany(() => Catalog, catalog => catalog.media)
+  catalogs: Catalog[]
 }
 
