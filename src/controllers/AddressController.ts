@@ -57,7 +57,7 @@ class AddressController {
 
     const address = new Address();
     address.phoneNumber = phone;
-    address.postal = postal;
+    address.postalCode = postal;
     address.cityId = city;
     address.provinceId = province;
     address.text = text;

@@ -4,8 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
-  
+  OneToMany, OneToOne,
+
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { dataTypes } from '../utils/enums';
@@ -54,7 +54,7 @@ export class User {
   bankCard: string;
 
   @Column(dataTypes.boolean, { default: true })
-  isActive
+  isActive: boolean
 
   @Column(dataTypes.text)
   password: string;
@@ -62,6 +62,9 @@ export class User {
   @Column(dataTypes.integer)
   status: number;
 
+  @Column(dataTypes.integer, { default: 0 })
+  specialPercent: number;
+  // todo:handle specialPercent in order create
   @Column(dataTypes.varchar, { default: 'USER' })
   role: string;
 
@@ -77,11 +80,11 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Address, address => address.user, {
+  @OneToOne(() => Address, address => address.user, {
     eager: true,
     onDelete: 'CASCADE'
   })
-  addresses: Address[];
+  address: Address;
 
   @OneToMany(() => Order, order => order.user, {
     onDelete: 'CASCADE'

@@ -1,10 +1,10 @@
 import { validate } from 'class-validator';
 import { Request, Response } from 'express';
 import { getRepository, Not } from 'typeorm';
+import { Address } from '../../entity/Address';
 import { Order } from '../../entity/Order';
 import { Product } from '../../entity/Product';
 import { User } from '../../entity/User';
-
 import { roles } from '../../utils/enums';
 import { getObjectValue } from '../../utils/funs';
 
@@ -36,7 +36,9 @@ class AdminUserController {
       password,
       email,
       role,
-      status
+      status,
+      address,
+      specialPercent
     } = req.body;
 
     if (phoneNumber && await this.users().findOne({
@@ -70,9 +72,11 @@ class AdminUserController {
     user.bankCard = bankCard;
     user.password = password;
     user.status = status;
+    user.specialPercent = specialPercent
     if (role == 'SUPER_ADMIN' || role == 'USER') {
       user.role = role;
     }
+
     await user.hashPassword();
 
     const errors = await validate(user);
@@ -82,6 +86,18 @@ class AdminUserController {
     }
     try {
       await this.users().save(user);
+
+      let newAddress = new Address();
+
+      newAddress.title = 'آدرس ۱';
+      newAddress.userId = user.id;
+      newAddress.cityId = address.cityId;
+      newAddress.provinceId = address.provinceId;
+      newAddress.postalCode = address.postalCode;
+      newAddress.phoneNumber = address.phone;
+      newAddress.text = address.text;
+
+      await getRepository(Address).save(newAddress)
     } catch (e) {
       console.log(e);
       res.status(409).send({
@@ -97,26 +113,32 @@ class AdminUserController {
   };
 
   static update = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params
     const {
-      userId,
       name,
       lastName,
       nationalCode,
+      phoneNumber,
+      bankCard,
+      companyName,
+      specialPercent,
+      email,
       role,
-      phoneNumber
+      status,
+      address
     } = req.body;
     let user: User;
     try {
-      user = await this.users().findOneOrFail(userId);
+      user = await this.users().findOneOrFail({ where: { id: Number(id) } });
     } catch (e) {
       return res.status(400).send({
         'code': 400,
         'data': 'Invalid UserId'
       });
     }
-    if (!phoneNumber && await this.users().findOne({
+    if (phoneNumber && await this.users().findOne({
       where: {
-        id: Not(userId),
+        id: Not(Number(id)),
         phoneNumber: phoneNumber
       }
     })) {
@@ -125,9 +147,9 @@ class AdminUserController {
         'data': 'Duplicate PhoneNumber'
       });
     }
-    if (!nationalCode && await this.users().findOne({
+    if (nationalCode && await this.users().findOne({
       where: {
-        id: Not(userId),
+        id: Not(Number(id)),
         nationalCode: nationalCode
       }
     })) {
@@ -136,12 +158,12 @@ class AdminUserController {
         'data': 'Duplicate NationalCode'
       });
     }
-    if (!getObjectValue(roles, role)) {
-      return res.status(400).send({
-        'code': 400,
-        'data': 'Invalid Status'
-      });
-    }
+    // if (!getObjectValue(roles, role)) {
+    //   return res.status(400).send({
+    //     'code': 400,
+    //     'data': 'Invalid Status'
+    //   });
+    // }
     if (name)
       user.name = name;
     if (lastName)
@@ -152,14 +174,37 @@ class AdminUserController {
       user.role = role;
     if (phoneNumber)
       user.phoneNumber = phoneNumber;
+    if (bankCard)
+      user.bankCard = bankCard;
+    if (email)
+      user.email = email;
+    if (status)
+      user.status = status;
+    if (companyName)
+      user.companyName = companyName;
+    if (specialPercent)
+      user.specialPercent = specialPercent;
     const errors = await validate(user);
     if (errors.length > 0) {
       res.status(400).send(errors);
       return;
     }
     try {
+
+      const newAddress = await getRepository(Address).findOne({ where: { userId: user.id }});
+      newAddress.title = 'آدرس ۱';
+      newAddress.userId = user.id;
+      newAddress.cityId = address.cityId;
+      newAddress.provinceId = address.provinceId;
+      newAddress.postalCode = address.postalCode;
+      newAddress.phoneNumber = address.phone;
+      newAddress.text = address.text;
+
+      await getRepository(Address).save(newAddress)
       await this.users().save(user);
+
     } catch (e) {
+      console.log(e);
       res.status(409).send({ 'code': 409 });
       return;
     }

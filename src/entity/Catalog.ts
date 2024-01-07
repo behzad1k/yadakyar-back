@@ -51,7 +51,7 @@ export class Catalog {
   })
   brand: Brand
 
-  @ManyToOne(() => Media, media => media.catalogs,{ eager: true })
+  @ManyToOne(() => Media, media => media.catalogs,{ eager: true ,onDelete: 'CASCADE'})
   @JoinColumn({
     name: 'mediaId',
     referencedColumnName: 'id'

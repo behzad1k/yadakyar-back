@@ -2,29 +2,29 @@ import { Request, Response } from 'express';
 import { getManager, getRepository, getTreeRepository } from 'typeorm';
 import { Attribute } from '../entity/Attribute';
 import { AttributeProduct } from '../entity/AttributeProduct';
-import { Category } from '../entity/Category';
+import { Catalog } from '../entity/Catalog';
 import { Media } from '../entity/Media';
 
-class CategoryController {
-  static categories = () => getRepository(Category);
+class CatalogController {
+  static catalogs = () => getRepository(Catalog);
   static attributeProducts = () => getRepository(AttributeProduct);
   static attributes = () => getRepository(Attribute);
   static medias = () => getRepository(Media);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
-    const categories = await getTreeRepository(Category).findTrees();
+    const catalogs = await getRepository(Catalog).find();
     return res.status(200).send({
       code: 200,
-      data: categories
+      data: catalogs
     });
   };
 
   static get = async (req: Request, res: Response): Promise<Response> => {
     const { slug } = req.params;
 
-    let category = undefined;
+    let catalog = undefined;
     try {
-      category = await this.categories().findOneOrFail({
+      catalog = await this.catalogs().findOneOrFail({
         where: {
           slug: slug
         },
@@ -48,7 +48,7 @@ class CategoryController {
       });
     }
 
-    category.attributes = attributes;
+    catalog.attributes = attributes;
     let where = '';
     Object.entries(req.query).map(([key, value]: [key: string, value: string[]], index) => {
       if (index == 0) {
@@ -60,7 +60,7 @@ class CategoryController {
     });
     let products = undefined;
     try {
-      products = await getManager().query(`SELECT * FROM attribute_product INNER JOIN product ON product.id = attribute_product.productId INNER JOIN product_group ON product.productGroupId = product_group.id INNER JOIN media ON media.id = product.mediaId WHERE categoryId=${category.id} ${where}`);
+      products = await getManager().query(`SELECT * FROM attribute_product INNER JOIN product ON product.id = attribute_product.productId INNER JOIN product_group ON product.productGroupId = product_group.id INNER JOIN media ON media.id = product.mediaId WHERE catalogId=${catalog.id} ${where}`);
     } catch (e) {
       console.log(e);
       return res.status(400).send({
@@ -69,12 +69,12 @@ class CategoryController {
       });
     }
 
-    category.products = products;
+    catalog.products = products;
     return res.status(200).send({
       code: 200,
-      data: category
+      data: catalog
     });
   };
 }
 
-export default CategoryController;
+export default CatalogController;

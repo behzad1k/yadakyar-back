@@ -19,7 +19,7 @@ export class AdminUserRoutes {
     this.router.get("", AdminUserController.index);
     this.router.get("/:id", AdminUserController.single);
     this.router.post("", AdminUserController.create);
-    this.router.put("", AdminUserController.update);
+    this.router.put("/:id", AdminUserController.update);
     this.router.delete("", AdminUserController.delete);
   }
 }

@@ -4,7 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne, JoinColumn, OneToMany, 
+  ManyToOne, JoinColumn, OneToMany, OneToOne,
 } from 'typeorm';
 import { dataTypes } from '../utils/enums';
 import { City } from './City';
@@ -33,7 +33,7 @@ export class Address {
   text: string;
 
   @Column(dataTypes.text)
-  postal: string;
+  postalCode: string;
 
   @Column(dataTypes.text, {
     nullable: true
@@ -62,7 +62,7 @@ export class Address {
   @JoinColumn({ name: "provinceId", referencedColumnName: "id"})
   province: Province
 
-  @ManyToOne(() => User, (user) => user.addresses, { onDelete: 'CASCADE' })
+  @OneToOne(() => User, (user) => user.address, { onDelete: 'CASCADE' })
   @JoinColumn({ name: "userId", referencedColumnName: "id"})
   user: User
 

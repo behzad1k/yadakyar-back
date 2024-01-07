@@ -21,7 +21,7 @@ export class ProductGroup {
   @Column(dataTypes.text)
   title: string;
 
-  @Column(dataTypes.text)
+  @Column(dataTypes.text, { nullable: true })
   titleEng: string;
 
   @Column(dataTypes.text)

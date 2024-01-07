@@ -15,7 +15,9 @@ class AdminBrandController {
   static index = async (req: Request, res: Response): Promise<Response> => {
     let brands = null;
     try {
-      brands = await this.brands().find();
+      brands = await this.brands().find({
+        relations: ['catalogs']
+      });
     } catch (e) {
       return res.status(501).send({
         code: 501,
@@ -36,6 +38,7 @@ class AdminBrandController {
       catalogTitles,
       catalogSorts
     } = req.body;
+
     const brand = new Brand();
 
     brand.title = title;
@@ -57,42 +60,42 @@ class AdminBrandController {
       });
     }
     const medias = [];
-    try{
+    try {
       await Promise.all(
         (req as any).files.map(async (file: any, index) => {
           const newName = await getUniqueSlug(getRepository(Media), brand.slug + (++index), 'title');
           const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/catalog/' + newName + path.parse(file.originalname).ext;
           const newPath = path.join(process.cwd(), 'public', 'uploads', 'catalog', newName + path.parse(file.originalname).ext);
-          const oldPath = path.join(process.cwd(), file.path)
-          fs.exists(oldPath, () => fs.rename(oldPath, newPath, (e) => console.log(e)))
+          const oldPath = path.join(process.cwd(), file.path);
+          fs.exists(oldPath, () => fs.rename(oldPath, newPath, (e) => console.log(e)));
           medias.push(
             await getRepository(Media).insert({
                 size: file.size,
                 title: newName,
                 originalTitle: file.originalname,
                 mime: file.mimetype,
-                morphType: 'Brand',
+                morphType: 'BrandCatalog',
                 morphId: brand.id,
                 path: newPath,
                 url: newUrl
               }
-            ))
-        }))
-    }catch (e){
+            ));
+        }));
+    } catch (e) {
       console.log(e);
     }
 
     for (let i = 0; i < catalogTitles.length; i++) {
-      try{
+      try {
         const catalog = new Catalog();
 
         catalog.brandId = brand.id;
         catalog.title = catalogTitles[i];
         catalog.sort = catalogSorts[i];
         catalog.slug = await getUniqueSlug(getRepository(Catalog), catalogTitles[i]);
-        catalog.mediaId = medias[i].raw.insertId
-        await getRepository(Catalog).save(catalog)
-      }catch (e){
+        catalog.mediaId = medias[i].raw.insertId;
+        await getRepository(Catalog).save(catalog);
+      } catch (e) {
         console.log(e);
         return res.status(409).send({
           code: 409,
@@ -168,7 +171,10 @@ class AdminBrandController {
         data: 'error try again later'
       });
     }
-    return res.status(204).send({ code: 200, data: '' });
+    return res.status(204).send({
+      code: 200,
+      data: ''
+    });
   };
 
   static single = async (req: Request, res: Response): Promise<Response> => {
@@ -177,6 +183,7 @@ class AdminBrandController {
     try {
       brand = await this.brands().findOneOrFail({
         where: { id: Number(id) },
+        relations: ['catalogs']
       });
     } catch (error) {
       res.status(400).send({
@@ -188,6 +195,81 @@ class AdminBrandController {
     return res.status(200).send({
       code: 200,
       data: brand
+    });
+  };
+
+  static updateCatalog = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+    const {
+      title,
+      sort
+    } = req.body;
+    const file = (req as any).file;
+    let catalog;
+    try {
+      catalog = await getRepository(Catalog).findOneOrFail({ where: { id: Number(id) }, relations: ['brand'] });
+
+      catalog.title = title;
+      catalog.sort = sort;
+
+      if (file) {
+        // todo: delete the file itself
+        await getRepository(Media).delete({
+          morphType: 'BrandCatalog',
+          morphId: Number(catalog.brandId)
+        });
+
+        const newName = await getUniqueSlug(getRepository(Media), catalog.brand.slug, 'title');
+        const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/catalog/' + newName + path.parse(file.originalname).ext;
+        const newPath = path.join(process.cwd(), 'public', 'uploads', 'catalog', newName + path.parse(file.originalname).ext);
+        const oldPath = path.join(process.cwd(), file.path);
+        fs.exists(oldPath, () => fs.rename(oldPath, newPath, (e) => console.log(e)));
+        const newFile = await getRepository(Media).insert({
+            size: file.size.toString(),
+            title: newName,
+            originalTitle: file.originalname,
+            mime: file.mimetype,
+            morphType: 'BrandCatalog',
+            morphId: catalog.brandId,
+            path: newPath,
+            url: newUrl
+        })
+
+        catalog.mediaId = newFile.raw.insertId;
+      }
+
+      await getRepository(Catalog).save(catalog);
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send({
+        code: 1002,
+        data: 'Invalid Id'
+      });
+    }
+
+    return res.status(200).send({
+      code: 200,
+      data: 'Successful'
+    });
+  };
+
+  static deleteCatalog = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+
+    try {
+      await getRepository(Catalog).delete({
+        id: Number(id)
+      });
+    } catch (error) {
+      return res.status(400).send({
+        code: 1002,
+        data: 'Invalid Id'
+      });
+    }
+
+    return res.status(200).send({
+      code: 204,
+      data: 'Successful'
     });
   };
 

@@ -10,7 +10,9 @@ class AdminCategoryController {
   static index = async (req: Request, res: Response): Promise<Response> => {
     let categories = null;
     try {
-      categories = await getTreeRepository(Category).findTrees();
+      categories = await getTreeRepository(Category).findTrees({
+
+      });
     } catch (e) {
       return res.status(501).send({
         code: 501,

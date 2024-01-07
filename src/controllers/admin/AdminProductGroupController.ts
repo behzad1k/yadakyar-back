@@ -139,8 +139,12 @@ class AdminProductGroupController {
       product.count = Number(count[i]);
       product.price = price[i];
       product.priceToman = await getTomanPrice(getRepository(Setting), price[i]);
-      product.wholesomePrice = wholesomePrice[i];
-      product.discountPrice = discountPrice[i];
+      if (Number(wholesomePrice[i])){
+        product.wholesomePrice = wholesomePrice[i];
+      }
+      if (Number(discountPrice[i])){
+        product.discountPrice = discountPrice[i];
+      }
       product.mediaId = medias[Number(picture[i]) - 1].raw.insertId
       product.status = status[i]
       product.productGroupId = productGroup.id
@@ -224,7 +228,7 @@ class AdminProductGroupController {
       console.log(e);
       return res.status(400).send({ code: 1002, data: "Invalid Id" })
     }
-    const euroPrice = await this.settings().findOne({ where: { key: 'euroPrice' } });
+    const euroPrice = await this.settings().findOne({ where: { key: 'derhamPrice' } });
 
     for (let i = 0; i < sku.length; i++) {
       await this.products().delete({ id: productId[i] });

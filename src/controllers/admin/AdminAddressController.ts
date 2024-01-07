@@ -21,8 +21,8 @@ class AdminAddressController {
     const address = new Address();
     address.title = title;
     // address.description = description;
-    address.longitude = longitude;
-    address.latitude = latitude;
+    // address.longitude = longitude;
+    // address.latitude = latitude;
     address.phoneNumber = phoneNumber;
     address.userId = userId;
     const errors = await validate(address);

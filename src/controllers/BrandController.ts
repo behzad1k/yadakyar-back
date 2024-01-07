@@ -2,29 +2,29 @@ import { Request, Response } from 'express';
 import { getManager, getRepository, getTreeRepository } from 'typeorm';
 import { Attribute } from '../entity/Attribute';
 import { AttributeProduct } from '../entity/AttributeProduct';
-import { Category } from '../entity/Category';
+import { Brand } from '../entity/Brand';
 import { Media } from '../entity/Media';
 
-class CategoryController {
-  static categories = () => getRepository(Category);
+class BrandController {
+  static brands = () => getRepository(Brand);
   static attributeProducts = () => getRepository(AttributeProduct);
   static attributes = () => getRepository(Attribute);
   static medias = () => getRepository(Media);
 
   static index = async (req: Request, res: Response): Promise<Response> => {
-    const categories = await getTreeRepository(Category).findTrees();
+    const brands = await getRepository(Brand).find();
     return res.status(200).send({
       code: 200,
-      data: categories
+      data: brands
     });
   };
 
   static get = async (req: Request, res: Response): Promise<Response> => {
     const { slug } = req.params;
 
-    let category = undefined;
+    let brand = undefined;
     try {
-      category = await this.categories().findOneOrFail({
+      brand = await this.brands().findOneOrFail({
         where: {
           slug: slug
         },
@@ -48,7 +48,7 @@ class CategoryController {
       });
     }
 
-    category.attributes = attributes;
+    brand.attributes = attributes;
     let where = '';
     Object.entries(req.query).map(([key, value]: [key: string, value: string[]], index) => {
       if (index == 0) {
@@ -60,7 +60,7 @@ class CategoryController {
     });
     let products = undefined;
     try {
-      products = await getManager().query(`SELECT * FROM attribute_product INNER JOIN product ON product.id = attribute_product.productId INNER JOIN product_group ON product.productGroupId = product_group.id INNER JOIN media ON media.id = product.mediaId WHERE categoryId=${category.id} ${where}`);
+      products = await getManager().query(`SELECT * FROM attribute_product INNER JOIN product ON product.id = attribute_product.productId INNER JOIN product_group ON product.productGroupId = product_group.id INNER JOIN media ON media.id = product.mediaId WHERE brandId=${brand.id} ${where}`);
     } catch (e) {
       console.log(e);
       return res.status(400).send({
@@ -69,12 +69,12 @@ class CategoryController {
       });
     }
 
-    category.products = products;
+    brand.products = products;
     return res.status(200).send({
       code: 200,
-      data: category
+      data: brand
     });
   };
 }
 
-export default CategoryController;
+export default BrandController;

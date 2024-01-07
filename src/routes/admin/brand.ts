@@ -17,8 +17,10 @@ export class AdminBrandRoutes {
   routes() {
     this.router.get("", AdminBrandController.index);
     this.router.get("/:id", AdminBrandController.single);
-    this.router.post("",multer(multerConfig('uploads/catalog')).array('catalogFiles'), AdminBrandController.create);
+    this.router.post("", multer(multerConfig('uploads/catalog')).array('catalogFiles'), AdminBrandController.create);
     this.router.put("/:id", AdminBrandController.update);
     this.router.delete("/:id", AdminBrandController.delete);
+    this.router.post("/catalog/:id", multer(multerConfig('uploads/catalog')).single('file'), AdminBrandController.updateCatalog);
+    this.router.delete("/catalog/:id", AdminBrandController.deleteCatalog);
   }
 }
