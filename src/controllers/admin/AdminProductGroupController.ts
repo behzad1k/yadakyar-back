@@ -115,8 +115,6 @@ class AdminProductGroupController {
               title: newName,
               originalTitle: file.originalname,
               mime: file.mimetype,
-              morphType: 'ProductGroup',
-              morphId: productGroup.id,
               path: newPath,
               url: newUrl
             }

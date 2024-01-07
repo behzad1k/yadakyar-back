@@ -5,6 +5,10 @@ import { getRepository } from 'typeorm';
 import { Article } from '../../entity/Article';
 import { User } from '../../entity/User';
 import { getUniqueSlug } from '../../utils/funs';
+import {Media} from "../../entity/Media";
+import path from "path";
+import process from "process";
+import fs from "fs";
 
 class AdminArticleController {
   static articles = () => getRepository(Article);
@@ -49,6 +53,23 @@ class AdminArticleController {
       });
       return;
     }
+
+    const file = (req as any).file
+    const newName = await getUniqueSlug(getRepository(Media),title , 'title');
+    const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/catalog/' + newName + path.parse(file.originalname).ext;
+    const newPath = path.join(process.cwd(), 'public', 'uploads', 'catalog', newName + path.parse(file.originalname).ext);
+    const oldPath = path.join(process.cwd(), file.path);
+    fs.exists(oldPath, () => fs.rename(oldPath, newPath, (e) => console.log(e)));
+    const newFile = await getRepository(Media).insert({
+      size: file.size.toString(),
+      title: newName,
+      originalTitle: file.originalname,
+      mime: file.mimetype,
+      path: newPath,
+      url: newUrl
+    })
+
+
     const article = new Article();
 
     article.title = title;
@@ -57,6 +78,8 @@ class AdminArticleController {
     article.keywords = keywords;
     article.authorId = user.id;
     article.slug = await getUniqueSlug(this.articles(), title);
+    article.mediaId = newFile.raw.insertId;
+
     const errors = await validate(article);
     if (errors.length > 0) {
       return res.status(400).send(errors);

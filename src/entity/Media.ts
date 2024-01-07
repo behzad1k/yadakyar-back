@@ -37,11 +37,6 @@ export class Media {
   @Column(dataTypes.text)
   originalTitle: string;
 
-  @Column(dataTypes.text)
-  morphType: string;
-
-  @Column(dataTypes.integer)
-  morphId: number;
 
   @Column(dataTypes.datetime)
   @CreateDateColumn()
