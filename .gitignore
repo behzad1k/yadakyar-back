@@ -5,4 +5,7 @@ build/
 tmp/
 temp/
 dist
+public/
+package-lock.json
+yarn.lock
 ormconfig.json
