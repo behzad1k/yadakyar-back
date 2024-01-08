@@ -33,8 +33,7 @@ class AttributeController {
       });
       attribute.medias = await this.medias().find({
         where: {
-          morphType: 'AttributeGroup',
-          morphId: attribute.id
+
         }
       })
     }catch (e) {

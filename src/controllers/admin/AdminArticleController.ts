@@ -1,10 +1,16 @@
 import { validate } from 'class-validator';
 import { Request, Response } from 'express';
 import jwtDecode from 'jwt-decode';
-import { getRepository } from 'typeorm';
+import { getRepository, In } from 'typeorm';
 import { Article } from '../../entity/Article';
+import { ArticleCategory } from '../../entity/ArticleCategory';
+import { Category } from '../../entity/Category';
 import { User } from '../../entity/User';
 import { getUniqueSlug } from '../../utils/funs';
+import {Media} from "../../entity/Media";
+import path from "path";
+import process from "process";
+import fs from "fs";
 
 class AdminArticleController {
   static articles = () => getRepository(Article);
@@ -34,9 +40,9 @@ class AdminArticleController {
       title,
       long,
       short,
-      keywords
+      keywords,
+      articleCategories
     } = req.body;
-
     let user;
     try {
       user = await this.users().findOneOrFail({
@@ -49,6 +55,22 @@ class AdminArticleController {
       });
       return;
     }
+
+    const file = (req as any).file;
+    const newName = await getUniqueSlug(getRepository(Media),title , 'title');
+    const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/article/' + newName + path.parse(file.originalname).ext;
+    const newPath = path.join(process.cwd(), 'public', 'uploads', 'article', newName + path.parse(file.originalname).ext);
+    const oldPath = path.join(process.cwd(), file.path);
+    fs.exists(oldPath, () => fs.rename(oldPath, newPath, (e) => console.log(e)));
+    const newFile = await getRepository(Media).insert({
+      size: file.size.toString(),
+      title: newName,
+      originalTitle: file.originalname,
+      mime: file.mimetype,
+      path: newPath,
+      url: newUrl
+    })
+
     const article = new Article();
 
     article.title = title;
@@ -57,6 +79,9 @@ class AdminArticleController {
     article.keywords = keywords;
     article.authorId = user.id;
     article.slug = await getUniqueSlug(this.articles(), title);
+    article.mediaId = newFile.raw.insertId;
+    article.categories = await getRepository(ArticleCategory).findBy({ id: In(articleCategories) })
+
     const errors = await validate(article);
     if (errors.length > 0) {
       return res.status(400).send(errors);
@@ -83,10 +108,12 @@ class AdminArticleController {
       title,
       long,
       short,
+      keywords,
+      articleCategories
     } = req.body;
 
     let article: Article;
-
+    // todo: fix this function sajad
     try {
       article = await this.articles().findOneOrFail({ where: { id: Number(id) } });
     } catch (error) {

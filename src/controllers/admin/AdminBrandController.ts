@@ -74,8 +74,6 @@ class AdminBrandController {
                 title: newName,
                 originalTitle: file.originalname,
                 mime: file.mimetype,
-                morphType: 'BrandCatalog',
-                morphId: brand.id,
                 path: newPath,
                 url: newUrl
               }
@@ -215,8 +213,7 @@ class AdminBrandController {
       if (file) {
         // todo: delete the file itself
         await getRepository(Media).delete({
-          morphType: 'BrandCatalog',
-          morphId: Number(catalog.brandId)
+          id: catalog.mediaId
         });
 
         const newName = await getUniqueSlug(getRepository(Media), catalog.brand.slug, 'title');
@@ -229,8 +226,6 @@ class AdminBrandController {
             title: newName,
             originalTitle: file.originalname,
             mime: file.mimetype,
-            morphType: 'BrandCatalog',
-            morphId: catalog.brandId,
             path: newPath,
             url: newUrl
         })

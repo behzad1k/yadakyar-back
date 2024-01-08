@@ -35,8 +35,7 @@ class ProductController {
       });
       product.medias = await this.medias().find({
         where: {
-          morphType: 'ProductGroup',
-          morphId: product.id
+
         }
       })
     }catch (e) {

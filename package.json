@@ -50,7 +50,7 @@
    "scripts": {
       "tsc": "tsc",
       "start": "ts-node-dev src/index.ts --transpileOnly",
-      "prod": "ts-node src/index.ts --transpileOnly",
+      "prod": "tsc && node build/index.js",
       "build": "rm -fr dist/* && tsc -p tsconfig-mjs.json && tsc -p tsconfig-cjs.json && ./fixup && node dist/cjs/index.js",
       "pm2": "pm2 start --interpreter /usr/local/bin/ts-node ts-node -- -P tsconfig.json src/index.ts",
       "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run"

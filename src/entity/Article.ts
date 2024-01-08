@@ -37,7 +37,7 @@ export class Article {
   @Column(dataTypes.integer)
   authorId: number;
 
-  @Column(dataTypes.integer)
+  @Column(dataTypes.integer, {nullable:true})
   mediaId: number;
 
   @Column(dataTypes.datetime)

@@ -1,9 +1,8 @@
 import { Router } from "express";
-import multer from 'multer';
-import multerConfig from '../../config/multer';
-import AdminAttributeController from '../../controllers/admin/AdminAttributeController';
 import AdminArticleController from '../../controllers/admin/AdminArticleController';
 import AuthController from "../../controllers/AuthController";
+import multer from "multer";
+import multerConfig from "../../config/multer";
 
 export class AdminArticleRoutes {
   public router: Router;
@@ -17,7 +16,7 @@ export class AdminArticleRoutes {
   routes() {
     this.router.get("", AdminArticleController.index);
     this.router.get("/:id", AdminArticleController.single);
-    this.router.post("",multer(multerConfig('uploads/article')).single('image'), AdminArticleController.create);
+    this.router.post("", multer(multerConfig('uploads/article')).single('file'), AdminArticleController.create);
     this.router.put("/:id", AdminArticleController.update);
     this.router.delete("/:id", AdminArticleController.delete);
   }
