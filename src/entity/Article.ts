@@ -37,6 +37,9 @@ export class Article {
   @Column(dataTypes.integer)
   authorId: number;
 
+  @Column(dataTypes.integer)
+  mediaId: number;
+
   @Column(dataTypes.datetime)
   @CreateDateColumn()
   createdAt: Date;

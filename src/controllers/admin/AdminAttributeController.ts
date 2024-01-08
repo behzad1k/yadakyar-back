@@ -38,7 +38,7 @@ class AdminAttributeController {
     attribute.title = title;
     attribute.parentId = parentId;
     attribute.description = description;
-    attribute.slug = await getUniqueSlug(this.attributes(), title);
+    attribute.slug = await getUniqueSlug(getRepository(Attribute), title);
 
     const errors = await validate(attribute);
     if (errors.length > 0) {

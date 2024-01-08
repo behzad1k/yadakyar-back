@@ -23,7 +23,9 @@ export const getUniqueSlug = async (repository: Repository<any>, value:string, k
     let where = {}
     where[key] = slug;
     while(await repository.findOne({
-        where: where
+        where: {
+            slug: slug
+        }
     })){
         where[key] = slug + index;
         await repository.findOne({

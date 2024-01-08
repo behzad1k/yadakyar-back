@@ -69,7 +69,7 @@ class AdminProductGroupController {
     productGroup.status = groupStatus;
     productGroup.categoryId = categoryId;
     productGroup.attributeGroupId = attributeGroupId;
-    productGroup.slug = await getUniqueSlug(this.productGroups(), title);
+    productGroup.slug = await getUniqueSlug(getRepository(ProductGroup), title);
     productGroup.code = await getUniqueCode(this.productGroups());
 
     let tag = null;
