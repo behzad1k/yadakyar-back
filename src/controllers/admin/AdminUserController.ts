@@ -192,15 +192,17 @@ class AdminUserController {
     try {
 
       const newAddress = await getRepository(Address).findOne({ where: { userId: user.id }});
-      newAddress.title = 'آدرس ۱';
-      newAddress.userId = user.id;
-      newAddress.cityId = address.cityId;
-      newAddress.provinceId = address.provinceId;
-      newAddress.postalCode = address.postalCode;
-      newAddress.phoneNumber = address.phone;
-      newAddress.text = address.text;
+      if(address) {
+        newAddress.title = 'آدرس ۱';
+        newAddress.userId = user.id;
+        newAddress.cityId = address.cityId;
+        newAddress.provinceId = address.provinceId;
+        newAddress.postalCode = address.postalCode;
+        newAddress.phoneNumber = address.phone;
+        newAddress.text = address.text;
 
-      await getRepository(Address).save(newAddress)
+        await getRepository(Address).save(newAddress)
+      }
       await this.users().save(user);
 
     } catch (e) {

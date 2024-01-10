@@ -64,7 +64,7 @@ export class User {
 
   @Column(dataTypes.integer, { default: 0 })
   specialPercent: number;
-  // todo:handle specialPercent in order create
+
   @Column(dataTypes.varchar, { default: 'USER' })
   role: string;
 
