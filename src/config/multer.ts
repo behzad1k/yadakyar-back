@@ -1,10 +1,11 @@
 import multer from 'multer';
 import * as path from 'path';
+import uniqid from 'uniqid';
 
 const imageStorage = (pathName: string) => multer.diskStorage({
   destination: 'public/' + pathName,
   filename: (req, file, cb) => {
-    cb(null, file.fieldname + '_' + Date.now()
+    cb(null, file.fieldname + '_' + uniqid()
       + path.extname(file.originalname))
   }
 });

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import jwtDecode from 'jwt-decode';
 import { getRepository, getTreeRepository } from 'typeorm';
+import { AttributeProduct } from '../entity/AttributeProduct';
 import { Media } from '../entity/Media';
 import {Product} from "../entity/Product";
 import { ProductFavorite } from '../entity/ProductFavorite';
@@ -31,17 +32,17 @@ class ProductController {
         where: {
           slug: slug
         },
-        relations: ['category', 'brand']
+        relations: ['category', 'brand', 'medias', 'products.attributes.attribute', 'products.attributes.attributeValue']
       });
-      product.medias = await this.medias().find({
-        where: {
-
-        }
-      })
     }catch (e) {
       console.log(e);
-      return res.status(400).send({ code: 10000, data: null });
+      return res.status(400).send({ code: 1000, data: null });
     }
+    product.attributes = await Promise.all(product.products.map((e) =>
+      getRepository(AttributeProduct).find({
+        where: { productId: e.id },
+        relations: ['attribute', 'attributeValue']
+      })))
 
     return res.status(200).send({ code: 200, data: product })
   }

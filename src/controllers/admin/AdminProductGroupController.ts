@@ -88,6 +88,32 @@ class AdminProductGroupController {
       return res.status(400).send(errors);
     }
 
+    const medias = [];
+    try{
+      await Promise.all(
+        (req as any).files.map(async (file: any, index) => {
+          const newName = await getUniqueSlug(getRepository(Media), productGroup.slug + (++index), 'title');
+          const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/product/' + newName + path.parse(file.originalname).ext;
+          const newPath = path.join(process.cwd(), 'public', 'uploads', 'product', newName + path.parse(file.originalname).ext);
+          const oldPath = path.join(process.cwd(), file.path)
+
+          fs.exists(oldPath, () => fs.rename(oldPath, newPath, (e) => console.log(e)));
+          const newMedia = await getRepository(Media).insert({
+            size: file.size,
+            title: newName,
+            originalTitle: file.originalname,
+            mime: file.mimetype,
+            path: newPath,
+            url: newUrl
+          })
+          medias.push(newMedia.raw.insertId)
+        }))
+    }catch (e){
+      console.log(e);
+    }
+
+    productGroup.medias = await getRepository(Media).findByIds(medias);
+
     try {
       await this.productGroups().save(productGroup);
     } catch (e) {
@@ -98,32 +124,6 @@ class AdminProductGroupController {
       });
     }
 
-    const medias = [];
-    try{
-      await Promise.all(
-        // @ts-ignore
-        req.files.map(async (file: any, index) => {
-          const newName = await getUniqueSlug(getRepository(Media), productGroup.slug + (++index), 'title');
-          const newUrl = req.protocol + '://' + req.get('host') + '/public/uploads/product/' + newName + path.parse(file.originalname).ext;
-          const newPath = path.join(process.cwd(), 'public', 'uploads', 'product', newName + path.parse(file.originalname).ext);
-          const oldPath = path.join(process.cwd(), file.path)
-
-          fs.existsSync(oldPath) && fs.rename(oldPath, newPath, (e) => console.log(e))
-          medias.push(
-            await getRepository(Media).insert({
-              size: file.size,
-              title: newName,
-              originalTitle: file.originalname,
-              mime: file.mimetype,
-              path: newPath,
-              url: newUrl
-            }
-          ))
-        }))
-    }catch (e){
-      console.log(e);
-    }
-
     let attributeGroup: AttributeGroup = null;
     try {
       attributeGroup = await this.attributeGroups().findOne({ where: { id: productGroup.attributeGroupId } });
@@ -131,7 +131,7 @@ class AdminProductGroupController {
       console.log(e);
       return res.status(400).send({ code: 1002, data: "Invalid Id" })
     }
-    for (let i = 0; i < sku.length; i++) {
+    for (let i = 0; i < sku?.length; i++) {
       const product = new Product();
       product.sku = sku[i];
       product.count = Number(count[i]);
@@ -143,7 +143,7 @@ class AdminProductGroupController {
       if (Number(discountPrice[i])){
         product.discountPrice = discountPrice[i];
       }
-      product.mediaId = medias[Number(picture[i]) - 1].raw.insertId
+      product.mediaId = medias[Number(picture[i]) - 1];
       product.status = status[i]
       product.productGroupId = productGroup.id
       await this.products().insert(product);

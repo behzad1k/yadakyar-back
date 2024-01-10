@@ -4,6 +4,7 @@ import { Attribute } from '../entity/Attribute';
 import { AttributeProduct } from '../entity/AttributeProduct';
 import { Category } from '../entity/Category';
 import { Media } from '../entity/Media';
+import { ProductGroup } from '../entity/ProductGroup';
 
 class CategoryController {
   static categories = () => getRepository(Category);
@@ -60,7 +61,7 @@ class CategoryController {
     });
     let products = undefined;
     try {
-      products = await getManager().query(`SELECT * FROM attribute_product INNER JOIN product ON product.id = attribute_product.productId INNER JOIN product_group ON product.productGroupId = product_group.id INNER JOIN media ON media.id = product.mediaId WHERE categoryId=${category.id} ${where}`);
+      products = await getManager().query(`SELECT Distinct product.id, product.*, media.* FROM attribute_product INNER JOIN product ON product.id = attribute_product.productId INNER JOIN product_group ON product.productGroupId = product_group.id INNER JOIN media ON media.id = product.mediaId WHERE categoryId=${category.id} ${where}`);
     } catch (e) {
       console.log(e);
       return res.status(400).send({
@@ -70,6 +71,7 @@ class CategoryController {
     }
 
     category.products = products;
+
     return res.status(200).send({
       code: 200,
       data: category

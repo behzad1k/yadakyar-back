@@ -10,6 +10,7 @@ import { dataTypes } from '../utils/enums';
 import { AttributeGroup } from './AttributeGroup';
 import { Brand } from './Brand';
 import { Category } from './Category';
+import { Media } from './Media';
 import { PaymentMethod } from './PaymentMethod';
 import { Product } from './Product';
 import { Tag } from './Tag';
@@ -73,7 +74,7 @@ export class ProductGroup {
   })
   brand: Brand;
 
-  @ManyToOne(() => ProductGroup, attributeGroup => attributeGroup.products, { onDelete: 'CASCADE' })
+  @ManyToOne(() => AttributeGroup, attributeGroup => attributeGroup.products, { onDelete: 'CASCADE' })
   @JoinColumn({
     name: 'attributeGroupId',
     referencedColumnName: 'id'
@@ -91,4 +92,10 @@ export class ProductGroup {
     name: 'product_tag'
   })
   tags: Tag[]
+
+  @ManyToMany(() => Media, media => media.productGroups, { onDelete: 'CASCADE' })
+  @JoinTable({
+    name: 'productGroup_media'
+  })
+  medias: Media[]
 }

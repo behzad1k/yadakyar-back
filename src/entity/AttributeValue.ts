@@ -41,8 +41,8 @@ export class AttributeValue {
 
   @ManyToOne(() => Attribute, (attribute) => attribute.attributeValues, { onDelete: 'CASCADE' })
   attribute: Attribute
-  //
-  // @OneToMany(() => AttributeProduct, (attributeProduct) => attributeProduct.attributeValue, { onDelete: 'CASCADE' })
-  // attributeProducts: AttributeProduct[]
+
+  @OneToMany(() => AttributeProduct, (attributeProduct) => attributeProduct.attributeValue, { onDelete: 'CASCADE' })
+  attributeProducts: AttributeProduct[]
 
 }

@@ -35,13 +35,13 @@ export class AttributeProduct {
     name: 'attributeSlug',
     referencedColumnName: 'slug'
   })
-  attributes: Attribute[]
+  attribute: Attribute
 
-  // @ManyToOne(() => AttributeValue, attributeValue => attributeValue.attributeProducts, { onDelete: 'CASCADE' })
-  // @JoinColumn({
-  //   name: 'attributeValueSlug',
-  //   referencedColumnName: 'slug'
-  // })
-  // attributeValue: AttributeValue
+  @ManyToOne(() => AttributeValue, attributeValue => attributeValue.attributeProducts, { onDelete: 'CASCADE' })
+  @JoinColumn({
+    name: 'attributeValueSlug',
+    referencedColumnName: 'slug'
+  })
+  attributeValue: AttributeValue
 
 }

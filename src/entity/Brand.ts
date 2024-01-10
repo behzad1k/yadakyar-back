@@ -4,7 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany, ManyToMany, JoinTable, TreeChildren, Tree, TreeParent, 
+  OneToMany, ManyToMany, JoinTable, TreeChildren, Tree, TreeParent, ManyToOne,
 } from 'typeorm';
 import { Length } from "class-validator";
 import { dataTypes } from '../utils/enums';
@@ -39,9 +39,6 @@ export class Brand {
   @OneToMany(() => Catalog, catalog => catalog.brand)
   catalogs: Catalog[]
 
-  @ManyToMany(() => ProductGroup, productGroup => productGroup.tags, { onDelete: 'CASCADE' })
-  @JoinTable({
-    name: 'product_tag'
-  })
+  @OneToMany(() => ProductGroup, productGroup => productGroup.brand, { onDelete: 'CASCADE' })
   products: Product[]
 }

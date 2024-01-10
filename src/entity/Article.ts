@@ -4,11 +4,12 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany, ManyToMany, JoinTable, TreeChildren, Tree, TreeParent, 
+  OneToMany, ManyToMany, JoinTable, TreeChildren, Tree, TreeParent, ManyToOne, JoinColumn,
 } from 'typeorm';
 import { Length } from "class-validator";
 import { dataTypes } from '../utils/enums';
 import { ArticleCategory } from './ArticleCategory';
+import { Media } from './Media';
 import { Order } from "./Order";
 import { Product } from './Product';
 import { ProductGroup } from './ProductGroup';
@@ -47,6 +48,13 @@ export class Article {
   @Column(dataTypes.datetime)
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => Media, media => media.articles,{ eager: true })
+  @JoinColumn({
+    name: 'mediaId',
+    referencedColumnName: 'id'
+  })
+  media: Media
 
   @ManyToMany(() => ArticleCategory, articleCategory => articleCategory.articles, { onDelete: 'CASCADE', eager: true })
   @JoinTable({
