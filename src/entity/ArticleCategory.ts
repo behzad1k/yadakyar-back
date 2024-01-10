@@ -17,7 +17,6 @@ import { ProductGroup } from './ProductGroup';
 import { User } from "./User";
 import "reflect-metadata";
 @Entity()
-@Tree('materialized-path')
 export class ArticleCategory {
   @PrimaryGeneratedColumn()
   id: number;
@@ -28,11 +27,8 @@ export class ArticleCategory {
   @Column(dataTypes.text)
   slug: string;
 
-  @Column(dataTypes.text)
-  description: string;
-
   @Column(dataTypes.text, { nullable: true })
-  parentId: string;
+  description: string;
 
   @Column(dataTypes.datetime)
   @CreateDateColumn()
@@ -41,12 +37,6 @@ export class ArticleCategory {
   @Column(dataTypes.datetime)
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @TreeChildren()
-  children: ArticleCategory[]
-
-  @TreeParent()
-  parent: ArticleCategory
 
   @ManyToMany(() => Article, article => article.categories, { onDelete: 'CASCADE' })
   @JoinTable({

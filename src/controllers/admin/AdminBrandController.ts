@@ -83,7 +83,7 @@ class AdminBrandController {
       console.log(e);
     }
 
-    for (let i = 0; i < catalogTitles.length; i++) {
+    for (let i = 0; i < catalogTitles?.length; i++) {
       try {
         const catalog = new Catalog();
 

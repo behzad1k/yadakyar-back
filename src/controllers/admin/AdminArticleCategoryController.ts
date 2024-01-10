@@ -10,7 +10,7 @@ class AdminArticleCategoryController {
   static index = async (req: Request, res: Response): Promise<Response> => {
     let articleCateogories = null;
     try {
-      articleCateogories = await getTreeRepository(ArticleCategory).findTrees();
+      articleCateogories = await getRepository(ArticleCategory).find();
     } catch (e) {
       return res.status(501).send({
         code: 501,
@@ -28,13 +28,11 @@ class AdminArticleCategoryController {
     const {
       title,
       description,
-      parentId
     } = req.body;
 
     const ArticleCateogory = new ArticleCategory();
 
     ArticleCateogory.title = title;
-    ArticleCateogory.parentId = parentId;
     ArticleCateogory.description = description;
     ArticleCateogory.slug = await getUniqueSlug(this.articleCateogories(), title);
     const errors = await validate(ArticleCateogory);
@@ -81,9 +79,9 @@ class AdminArticleCategoryController {
     if (description) {
       ArticleCateogory.description = description;
     }
-    if (parentId) {
-      ArticleCateogory.parentId = parentId;
-    }
+    // if (parentId) {
+    //   ArticleCateogory.parentId = parentId;
+    // }
 
     const errors = await validate(ArticleCateogory);
     if (errors.length > 0) {
