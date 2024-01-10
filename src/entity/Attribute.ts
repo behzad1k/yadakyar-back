@@ -47,7 +47,7 @@ export class Attribute {
   @TreeParent()
   parent: Attribute
 
-  @OneToMany(() => AttributeProduct, attributeProduct => attributeProduct.attributes, { onDelete: 'CASCADE' })
+  @OneToMany(() => AttributeProduct, attributeProduct => attributeProduct.attribute, { onDelete: 'CASCADE' })
   products: Product[]
 
   @OneToMany(() => AttributeValue, attributeValue => attributeValue.attribute, { onDelete: 'CASCADE', eager: true })
