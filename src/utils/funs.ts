@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import jwtDecode from "jwt-decode";
-import { Repository } from "typeorm";
+import { getRepository, Repository } from 'typeorm';
+import { User } from '../entity/User';
 import { dataTypes } from './enums';
 
 export const getUserId = (token:string):number =>{
@@ -69,6 +70,15 @@ export const isNumeric = (str: string) => {
     if (typeof str != "string") return false // we only process strings!
     return !isNaN(Number(str)) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
       !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+}
+
+export const calcUserPrice = async (userId, price) => {
+    try{
+        const user = await getRepository(User).findOneOrFail({ where: { id: userId }})
+        return price + (price * user.specialPercent / 100);
+    }catch (e){
+        return null
+    }
 }
 
 export const hash = (value: string) => bcrypt.hashSync(value, 10);

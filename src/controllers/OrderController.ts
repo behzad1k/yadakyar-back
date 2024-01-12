@@ -11,7 +11,7 @@ import { Product } from '../entity/Product';
 import { Setting } from '../entity/Setting';
 import { User } from '../entity/User';
 import { dataTypes, orderStatus } from '../utils/enums';
-import { generateCode, getTomanPrice, getUniqueSlug, omit } from '../utils/funs';
+import { calcUserPrice, generateCode, getTomanPrice, getUniqueSlug, omit } from '../utils/funs';
 
 class OrderController {
 
@@ -98,7 +98,6 @@ class OrderController {
         }
       });
       if (!order) {
-        console.log('here');
         order = await this.orders().insert({
           price: 0,
           userId: user.id,
@@ -131,7 +130,7 @@ class OrderController {
               orderId: order.id,
               productId: product,
               count: counts[index],
-              price: productObj.price,
+              price: await calcUserPrice(userId, productObj.price),
               priceToman: await getTomanPrice(getRepository(Setting), productObj.price)
             });
           }
@@ -223,10 +222,9 @@ class OrderController {
     });
 
     try {
-      const specialPrice = totalPrice + (user.specialPercent * totalPrice / 100);
       await this.orders().update(order.id, {
-        price: specialPrice,
-        priceToman: await getTomanPrice(getRepository(Setting), specialPrice)
+        price: totalPrice,
+        priceToman: await getTomanPrice(getRepository(Setting), totalPrice)
       });
     } catch (e) {
       console.log(e);
