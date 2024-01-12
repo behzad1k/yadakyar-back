@@ -46,7 +46,7 @@ class AddressController {
     try {
       user = await this.users().findOneOrFail({
         where: { id: id },
-        relations: ['addresses']
+        relations: ['address']
       });
     } catch (error) {
       return res.status(400).send({
