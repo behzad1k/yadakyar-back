@@ -5,7 +5,9 @@ import { AttributeProduct } from '../entity/AttributeProduct';
 import { Order } from '../entity/Order';
 import { OrderProduct } from '../entity/OrderProduct';
 import { Product } from '../entity/Product';
+import { Setting } from '../entity/Setting';
 import { User } from '../entity/User';
+import { getTomanPrice } from '../utils/funs';
 
 class CartController {
   static attributeProducts = () => getRepository(AttributeProduct);
@@ -91,6 +93,8 @@ class CartController {
           productId: productId,
           orderId: orderId
         }, { count: newCount });
+
+
       } else {
         await this.orderProducts().delete({
           productId: productId,
@@ -103,6 +107,22 @@ class CartController {
         code: 409,
         data: 'error try again later'
       });
+    }
+
+    try{
+      let newTotalPrice = 0;
+      const orderProducts = await getRepository(OrderProduct).find({ where: { orderId: orderId }})
+      orderProducts.map((product) => {
+        newTotalPrice += (product.count * product.price);
+      })
+      await getRepository(Order).update({
+        id: orderId,
+      }, {
+        price: newTotalPrice,
+        priceToman: await getTomanPrice(getRepository(Setting),newTotalPrice)
+      })
+    }catch (e){
+      console.log(e);
     }
 
     return res.status(200).send({
