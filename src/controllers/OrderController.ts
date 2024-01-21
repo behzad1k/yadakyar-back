@@ -131,7 +131,7 @@ class OrderController {
               productId: product,
               count: counts[index],
               price: await calcUserPrice(userId, productObj.price),
-              priceToman: await getTomanPrice(getRepository(Setting), productObj.price)
+              priceToman: await getTomanPrice(productObj.price)
             });
           }
         }));
@@ -224,7 +224,7 @@ class OrderController {
     try {
       await this.orders().update(order.id, {
         price: totalPrice,
-        priceToman: await getTomanPrice(getRepository(Setting), totalPrice)
+        priceToman: await getTomanPrice(totalPrice)
       });
     } catch (e) {
       console.log(e);

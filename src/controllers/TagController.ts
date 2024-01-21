@@ -24,11 +24,11 @@ class TagController {
 
     let tag = undefined;
     try {
-      tag = await this.tags().findOneOrFail({
+      tag = await getRepository(Tag).findOne({
         where: {
           slug: slug
         },
-        relations: ['products']
+        relations: ['products','products.products'],
       });
     } catch (e) {
       console.log(e);

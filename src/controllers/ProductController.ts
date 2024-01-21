@@ -38,11 +38,16 @@ class ProductController {
       console.log(e);
       return res.status(400).send({ code: 1000, data: null });
     }
-    product.attributes = await Promise.all(product.products.map((e) =>
-      getRepository(AttributeProduct).find({
-        where: { productId: e.id },
-        relations: ['attribute', 'attributeValue']
-      })))
+    const ats = {}
+    product.products[0].attributes?.map((e) => {
+      ats[e.attribute.title] = []
+    })
+
+    await Promise.all(product.products.map(async (e) => {
+      e.attributes.map((attributeProduct) => !ats[attributeProduct.attribute.title].includes((attributeProduct.attributeValue.title)) && ats[attributeProduct.attribute.title].push(attributeProduct.attributeValue.title))
+    }));
+
+    product.attributes = ats
 
     return res.status(200).send({ code: 200, data: product })
   }

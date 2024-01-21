@@ -16,7 +16,7 @@ export class AdminProductGroupRoutes {
     this.router.get("", AdminProductGroupController.index);
     this.router.get("/:id", AdminProductGroupController.single);
     this.router.post("", multer(multerConfig('uploads/product')).array('files'), AdminProductGroupController.create);
-    this.router.put("/:id", multer(multerConfig('uploads/product')).array('files'), AdminProductGroupController.update);
+    this.router.put("/:id", multer(multerConfig('uploads/product')).any(), AdminProductGroupController.update);
     this.router.delete("/:id", AdminProductGroupController.delete);
   }
 }

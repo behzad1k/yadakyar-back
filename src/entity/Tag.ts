@@ -35,9 +35,6 @@ export class Tag {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToMany(() => ProductGroup, productGroup => productGroup.tags, { onDelete: 'CASCADE' })
-  @JoinTable({
-    name: 'product_tag'
-  })
-  products: Product[]
+  @OneToMany(() => ProductGroup, productGroup => productGroup.tag, { onDelete: 'CASCADE' })
+  products: ProductGroup[]
 }

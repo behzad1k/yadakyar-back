@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import jwtDecode from "jwt-decode";
 import { getRepository, Repository } from 'typeorm';
+import { Setting } from '../entity/Setting';
 import { User } from '../entity/User';
 import { dataTypes } from './enums';
 
@@ -23,21 +24,25 @@ export const getUniqueSlug = async (repository: Repository<any>, value:string, k
     let slug = value?.replace(' ', '-');
     let where = {}
     where[key] = slug;
-    while(await repository.findOne({
-        where: where
-    })){
-        where[key] = slug + index;
-        await repository.findOne({
+    try {
+        while (await repository.findOne({
             where: where
-        });
-        index = Number(index) + 1;
+        })) {
+            where[key] = slug + index;
+            await repository.findOne({
+                where: where
+            });
+            index = Number(index) + 1;
+        }
+    }catch (e){
+        return value;
     }
     return where[key];
 }
 
-export const getTomanPrice = async (repository: Repository<any>, price: number) => {
-  const derhamPrice = await repository.findOne({ where: { key: 'derhamPrice' } });
-  return price * derhamPrice.value;
+export const getTomanPrice = async (price: number) => {
+  const derhamPrice = await getRepository(Setting).findOne({ where: { key: 'derhamPrice' } });
+  return price * Number(derhamPrice.value);
 }
 
 export const getUniqueCode = async (repository: Repository<any>) => {

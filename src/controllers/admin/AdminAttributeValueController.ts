@@ -11,7 +11,9 @@ class AdminAttributeValueController {
   static index = async (req: Request, res: Response): Promise<Response> => {
     let attributeValues = null;
     try {
-      attributeValues = await this.attributeValues().find();
+      attributeValues = await this.attributeValues().find({
+        relations: ['attribute']
+      });
     } catch (e) {
       return res.status(501).send({
         code: 501,

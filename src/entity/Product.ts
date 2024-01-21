@@ -58,14 +58,14 @@ export class Product {
   @OneToMany(() => AttributeProduct, attributeProduct => attributeProduct.products, { onDelete: 'CASCADE'  })
   attributes: AttributeProduct[]
 
-  @ManyToOne(() => ProductGroup, productGroup => productGroup.products)
+  @ManyToOne(() => ProductGroup, productGroup => productGroup.products, { onDelete: 'CASCADE'})
   @JoinColumn({
     name: 'productGroupId',
     referencedColumnName: 'id'
   })
   productGroup: ProductGroup
 
-  @ManyToOne(() => Media, media => media.products,{ eager: true })
+  @ManyToOne(() => Media, media => media.products,{ eager: true, onDelete: 'CASCADE' })
   @JoinColumn({
     name: 'mediaId',
     referencedColumnName: 'id'

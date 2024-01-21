@@ -50,6 +50,9 @@ export class ProductGroup {
   brandId: number;
 
   @Column(dataTypes.integer)
+  tagId: number;
+
+  @Column(dataTypes.integer)
   attributeGroupId: number;
 
   @Column(dataTypes.datetime)
@@ -87,11 +90,12 @@ export class ProductGroup {
   })
   products: Product[]
 
-  @ManyToMany(() => Tag, tag => tag.products, { onDelete: 'CASCADE' })
-  @JoinTable({
-    name: 'product_tag'
+  @ManyToOne(() => Tag, tag => tag.products, { onDelete: 'CASCADE' })
+  @JoinColumn({
+    name: 'tagId',
+    referencedColumnName: 'id'
   })
-  tags: Tag[]
+  tag: Tag
 
   @ManyToMany(() => Media, media => media.productGroups, { onDelete: 'CASCADE' })
   @JoinTable({

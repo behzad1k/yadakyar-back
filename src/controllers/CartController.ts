@@ -119,7 +119,7 @@ class CartController {
         id: orderId,
       }, {
         price: newTotalPrice,
-        priceToman: await getTomanPrice(getRepository(Setting),newTotalPrice)
+        priceToman: await getTomanPrice(newTotalPrice)
       })
     }catch (e){
       console.log(e);
