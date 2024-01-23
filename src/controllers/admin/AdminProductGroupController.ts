@@ -262,18 +262,20 @@ class AdminProductGroupController {
     for (let i = 0; i < productId?.length; i++) {
       let product;
       try {
-        product = await getRepository(Product).findOneOrFail({
+        product = await getRepository(Product).findOne({
           where: {
-            sku: sku[i]
+            id: productId[i]
           }
-        })
-      }catch (e){
+        });
+        if (!product) {
+          product = new Product();
+        }
+      } catch (e) {
         return res.status(400).send({
           code: 1002,
-          data: 'Invalid SKU'
+          data: 'Invalid Product'
         });
       }
-      console.log(medias[picture[i]]);
       product.sku = sku[i];
       product.count = Number(count[i]);
       product.price = price[i];
@@ -283,24 +285,50 @@ class AdminProductGroupController {
       product.mediaId = medias[picture[i]];
       product.status = status[i];
       product.productGroupId = productGroup.id;
-      try{
+      product.productGroup = await getRepository(ProductGroup).findOne({ where: { id: productGroup.id } });
+      product.media = await getRepository(Media).findOne({ where: { id: medias[picture[i]] } });
+      try {
         await this.products().save(product);
-      }catch (e){
+      } catch (e) {
         console.log(e);
         res.status(409).send({
           code: 409,
           data: 'error try again later'
         });
       }
+      await Promise.all(attributeGroup.attributes.map(async (attribute) => {
+        let attributeProduct;
+        try {
+          attributeProduct = await getRepository(AttributeProduct).findOne({
+            where: {
+              productId: product.id,
+              attributeSlug: attribute.slug
+            }
+          });
+          if (!attributeProduct){
+            attributeProduct = new AttributeProduct();
+          }
+        } catch (e) {
+          return res.status(400).send({
+            code: 1002,
+            data: 'Invalid Attribute'
+          });
+        }
 
-      attributeGroup.attributes.map((attribute) => {
-        this.attributeProducts().update({
-          productId: product.id,
-          attributeSlug: attribute.slug
-        },{
-          attributeValueSlug: req.body[`attribute-${attribute.id}`][i],
-        });
-      });
+        attributeProduct.productId = product.id;
+        attributeProduct.attributeSlug = attribute.slug;
+        attributeProduct.attributeValueSlug = req.body[`attribute-${attribute.id}`][i];
+
+        try{
+          await getRepository(AttributeProduct).save(attributeProduct);
+        }catch (e){
+          console.log(e);
+          res.status(409).send({
+            code: 409,
+            data: 'error try again later'
+          });
+        }
+      }));
     }
 
     return res.status(200).send({
