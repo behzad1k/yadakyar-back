@@ -236,6 +236,7 @@ class AdminProductGroupController {
     productGroup.status = groupStatus;
     productGroup.categoryId = categoryId;
     productGroup.attributeGroupId = attributeGroupId;
+    productGroup.tagId = tagId;
     productGroup.medias = await getRepository(Media).findByIds(Object.values(medias));
 
     const errors = await validate(productGroup);
